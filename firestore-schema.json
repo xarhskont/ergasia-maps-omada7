@@ -1,0 +1,71 @@
+{
+  "firestore_structure": {
+    "users": {
+      "description": "Stores user profile information",
+      "document_id": "userId (Firebase Auth UID)",
+      "fields": {
+        "fullName": "string",
+        "email": "string",
+        "role": "string (enum: 'employer', 'freelancer')",
+        "bio": "string",
+        "skills": "array of strings",
+        "averageRating": "number (calculated field)",
+        "totalReviews": "number",
+        "createdAt": "timestamp",
+        "photoURL": "string"
+      }
+    },
+    "jobs": {
+      "description": "Stores micro-job postings and their current state",
+      "document_id": "jobId (auto-generated)",
+      "fields": {
+        "title": "string",
+        "description": "string",
+        "category": "string",
+        "budget": "number",
+        "deadline": "timestamp",
+        "employerId": "string (reference to users collection)",
+        "freelancerId": "string (reference to users collection, null if not yet assigned)",
+        "status": "string (enum: 'open', 'assigned', 'completed', 'cancelled')",
+        "createdAt": "timestamp",
+        "updatedAt": "timestamp"
+      }
+    },
+    "applications": {
+      "description": "Tracks freelancer applications for jobs",
+      "document_id": "appId (auto-generated)",
+      "fields": {
+        "jobId": "string (reference to jobs collection)",
+        "freelancerId": "string (reference to users collection)",
+        "proposalText": "string",
+        "attachmentUrl": "string (Firebase Storage link)",
+        "status": "string (enum: 'pending', 'accepted', 'rejected')",
+        "appliedAt": "timestamp"
+      }
+    },
+    "reviews": {
+      "description": "Stores mutual ratings between employers and freelancers",
+      "document_id": "reviewId (auto-generated)",
+      "fields": {
+        "jobId": "string (reference to jobs collection)",
+        "reviewerId": "string (reference to users collection)",
+        "revieweeId": "string (reference to users collection)",
+        "rating": "number (1-5)",
+        "comment": "string",
+        "type": "string (enum: 'employer_to_freelancer', 'freelancer_to_employer')",
+        "createdAt": "timestamp"
+      }
+    },
+    "deliverables": {
+      "description": "Stores the final files submitted by a freelancer",
+      "document_id": "deliveryId (auto-generated)",
+      "fields": {
+        "jobId": "string (reference to jobs collection)",
+        "freelancerId": "string (reference to users collection)",
+        "fileUrl": "string (Firebase Storage link)",
+        "notes": "string",
+        "submittedAt": "timestamp"
+      }
+    }
+  }
+}
