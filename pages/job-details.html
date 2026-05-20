@@ -1,0 +1,74 @@
+<!-- job-details.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Details & Review | Job>inder</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body>
+    <header id="main-header"></header>
+    
+    <main>
+        <div class="rating-container" id="rating-section" style="display:none;">
+            <h2 style="text-align: center;">Rate your experience</h2>
+            <form id="rating-form">
+                <div class="form-group">
+                    <div class="star-rating">
+                        <input type="radio" id="star5" name="rating" value="5"><label for="star5">★</label>
+                        <input type="radio" id="star4" name="rating" value="4"><label for="star4">★</label>
+                        <input type="radio" id="star3" name="rating" value="3"><label for="star3">★</label>
+                        <input type="radio" id="star2" name="rating" value="2"><label for="star2">★</label>
+                        <input type="radio" id="star1" name="rating" value="1"><label for="star1">★</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <textarea id="comment" placeholder="Leave a comment..."></textarea>
+                </div>
+                <button type="submit" class="btn-submit">Submit Review</button>
+            </form>
+        </div>
+    </main>
+
+    <footer id="main-footer"></footer>
+
+    <script type="module">
+        import { submitRating } from '../assets/js/rating.js';
+        import { loadHeader, loadFooter } from '../assets/js/layout.js';
+        
+        // Manually trigger layout since we are in a subfolder and script logic varies
+        loadHeader();
+        loadFooter();
+
+        const mockJob = { id: "job123", status: "completed", freelancerId: "userA", employerId: "userB" };
+        const currentUser = "userB"; 
+        const revieweeId = mockJob.freelancerId;
+        const type = "employer_to_freelancer";
+
+        if (mockJob.status === "completed") {
+            document.getElementById('rating-section').style.display = 'block';
+        }
+
+        document.getElementById('rating-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const rating = document.querySelector('input[name="rating"]:checked')?.value;
+            const comment = document.getElementById('comment').value;
+
+            if (!rating) {
+                alert("Please select a rating");
+                return;
+            }
+
+            try {
+                await submitRating(mockJob.id, revieweeId, parseInt(rating), comment, type);
+                alert("Rating submitted successfully!");
+                document.getElementById('rating-section').style.display = 'none';
+            } catch (err) {
+                alert("Error submitting rating: " + err.message);
+            }
+        });
+    </script>
+</body>
+</html>
+
