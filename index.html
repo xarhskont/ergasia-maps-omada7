@@ -25,24 +25,31 @@
     <script type="module">
         import { auth } from './assets/js/firebase-config.js';
         import { loadHeader, loadFooter } from './assets/js/layout.js';
+        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 
         loadHeader();
         loadFooter();
 
         const ctaContainer = document.getElementById('auth-cta');
 
-        if (auth.currentUser) {
-            ctaContainer.innerHTML = `
-                <a href="pages/search.html" class="btn-submit" style="text-decoration: none; padding: 10px 20px; border-radius: 6px; width: auto;">Find Jobs</a>
-                <a href="pages/profile.html" class="btn-submit" style="text-decoration: none; padding: 10px 20px; border-radius: 6px; width: auto; background: #6d28d9;">My Profile</a>
-            `;
-        } else {
-            ctaContainer.innerHTML = `
-                <a href="login.html" class="btn-submit" style="text-decoration: none; padding: 10px 20px; border-radius: 6px; width: auto;">Login to Continue</a>
-            `;
-        }
+        // Use onAuthStateChanged to wait for Firebase to initialize the user session
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                ctaContainer.innerHTML = `
+                    <a href="pages/search.html" class="btn-submit" style="text-decoration: none; padding: 10px 20px; border-radius: 6px; width: auto;">Find Jobs</a>
+                    <a href="pages/profile.html" class="btn-submit" style="text-decoration: none; padding: 10px 20px; border-radius: 6px; width: auto; background: #6d28d9;">My Profile</a>
+                `;
+                // Refresh header to show user profile avatar
+                loadHeader();
+            } else {
+                ctaContainer.innerHTML = `
+                    <a href="login.html" class="btn-submit" style="text-decoration: none; padding: 10px 20px; border-radius: 6px; width: auto;">Login to Continue</a>
+                    <a href="register.html" class="btn-submit" style="text-decoration: none; padding: 10px 20px; border-radius: 6px; width: auto; background: #4c1d95;">Create Account</a>
+                `;
+                loadHeader();
+            }
+        });
     </script>
-    <script type="module" src="assets/js/layout.js"></script>
 </body>
 </html>
 
