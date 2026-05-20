@@ -1,0 +1,49 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job>inder - Welcome</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body style="display: flex; flex-direction: column; min-height: 100vh;">
+    <header id="main-header"></header>
+    
+    <main>
+        <div class="rating-container" style="text-align: center;">
+            <h1 style="color: var(--primary-color);">Welcome to Job&gt;inder</h1>
+            <p>Find and complete micro-jobs quickly and reliably.</p>
+            <div id="auth-cta" style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+                <!-- Buttons will be dynamically rendered based on auth status -->
+            </div>
+        </div>
+    </main>
+
+    <footer id="main-footer"></footer>
+    
+    <script type="module">
+        import { auth } from './assets/js/firebase-config.js';
+        import { loadHeader, loadFooter } from './assets/js/layout.js';
+
+        loadHeader();
+        loadFooter();
+
+        const ctaContainer = document.getElementById('auth-cta');
+
+        if (auth.currentUser) {
+            ctaContainer.innerHTML = `
+                <a href="pages/search.html" class="btn-submit" style="text-decoration: none; padding: 10px 20px; border-radius: 6px; width: auto;">Find Jobs</a>
+                <a href="pages/profile.html" class="btn-submit" style="text-decoration: none; padding: 10px 20px; border-radius: 6px; width: auto; background: #6d28d9;">My Profile</a>
+            `;
+        } else {
+            ctaContainer.innerHTML = `
+                <a href="login.html" class="btn-submit" style="text-decoration: none; padding: 10px 20px; border-radius: 6px; width: auto;">Login to Continue</a>
+            `;
+        }
+    </script>
+    <script type="module" src="assets/js/layout.js"></script>
+</body>
+</html>
+
+</html>
