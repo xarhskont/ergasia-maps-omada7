@@ -1,0 +1,103 @@
+<!-- apply-job.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply for Job | FreelanceHub</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body>
+    <header id="main-header"></header>
+    
+    <main class="application-container">
+        <div class="apply-card">
+            <h1>Submit Your Proposal</h1>
+            <div id="job-summary" class="job-summary">
+                <!-- Job details will be injected here -->
+            </div>
+            
+            <form id="application-form">
+                <div class="form-group">
+                    <label for="proposal-text">Your Proposal</label>
+                    <textarea id="proposal-text" name="proposal" rows="6" placeholder="Explain why you are the best fit for this job..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="estimated-time">Estimated Delivery (Days)</label>
+                    <input type="number" id="estimated-time" name="time" min="1" placeholder="e.g. 3" required>
+                </div>
+                <div class="form-group">
+                    <label for="bid-amount">Your Bid ($)</label>
+                    <input type="number" id="bid-amount" name="bid" min="0" placeholder="Enter your price" required>
+                </div>
+                <button type="submit" class="btn-submit">Send Proposal</button>
+            </form>
+        </div>
+    </main>
+
+    <footer id="main-footer"></footer>
+
+    <script type="module">
+        import { auth, db } from '../assets/js/firebase-config.js';
+        import { doc, getDoc, addDoc, collection } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { loadHeader, loadFooter } from '../assets/js/layout.js';
+
+        loadHeader();
+        loadFooter();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const jobId = urlParams.get('id');
+
+        async function loadJobDetails() {
+            if (!jobId) {
+                alert("Invalid job ID");
+                window.location.href = 'freelancer-marketplace.html';
+                return;
+            }
+
+            try {
+                const jobDoc = await getDoc(doc(db, "jobs", jobId));
+                if (jobDoc.exists()) {
+                    const job = jobDoc.data();
+                    document.getElementById('job-summary').innerHTML = `
+                        <h3>${job.title}</h3>
+                        <p>Budget: <strong>$${job.budget}</strong> | Deadline: <strong>${job.deadline}</strong></p>
+                    `;
+                }
+            } catch (err) {
+                console.error("Error loading job:", err);
+            }
+        }
+
+        document.getElementById('application-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (!user) {
+                alert("Please log in to apply");
+                window.location.href = '../login.html';
+                return;
+            }
+
+            const applicationData = {
+                jobId: jobId,
+                freelancerId: user.uid,
+                proposal: document.getElementById('proposal-text').value,
+                estimatedTime: document.getElementById('estimated-time').value,
+                bid: document.getElementById('bid-amount').value,
+                status: 'pending',
+                appliedAt: new Date()
+            };
+
+            try {
+                await addDoc(collection(db, "applications"), applicationData);
+                alert("Proposal submitted successfully!");
+                window.location.href = 'my-jobs.html';
+            } catch (err) {
+                alert("Error submitting application: " + err.message);
+            }
+        });
+
+        loadJobDetails();
+    </script>
+</body>
+</html>

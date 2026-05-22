@@ -33,7 +33,7 @@ loginForm.addEventListener('submit', async (e) => {
             if (role === 'employer') {
                 window.location.href = 'pages/employer-dashboard.html'; 
             } else {
-                window.location.href = 'pages/freelancer-dashboard.html';
+                window.location.href = 'pages/freelancer-marketplace.html'; // Fixed redirect
             }
 
         } else {

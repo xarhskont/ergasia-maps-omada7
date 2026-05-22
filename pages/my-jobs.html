@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Jobs | FreelanceHub</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body>
+    <header id="main-header"></header>
+    
+    <main class="my-jobs-container">
+        <h1>My Projects</h1>
+        
+        <div class="jobs-status-tabs">
+            <button class="tab-btn active" data-status="all">All</button>
+            <button class="tab-btn" data-status="pending">Pending</button>
+            <button class="tab-btn" data-status="assigned">Assigned</button>
+            <button class="tab-btn" data-status="submitted">Submitted</button>
+        </div>
+
+        <div id="jobs-list" class="jobs-tracker-grid">
+            </div>
+    </main>
+
+    <footer id="main-footer"></footer>
+
+    <script type="module">
+        import { auth, db } from '../assets/js/firebase-config.js';
+        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+        import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { loadHeader, loadFooter } from '../assets/js/layout.js';
+
+        loadHeader();
+        loadFooter();
+
+        const jobsList = document.getElementById('jobs-list');
+        let currentFilter = 'all';
+
+        // ΚΡΙΣΙΜΗ ΔΙΟΡΘΩΣΗ: Περιμένουμε την αρχικοποίηση της σύνδεσης από τη Firebase
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                fetchMyJobs(user);
+            } else {
+                window.location.href = '../login.html';
+            }
+        });
+
+        async function fetchMyJobs(user) {
+            try {
+                const q = query(collection(db, "applications"), where("freelancerId", "==", user.uid));
+                const querySnapshot = await getDocs(q);
+                
+                const applications = [];
+                querySnapshot.forEach((doc) => {
+                    applications.push({ id: doc.id, ...doc.data() });
+                });
+
+                const filtered = currentFilter === 'all' 
+                    ? applications 
+                    : applications.filter(app => app.status === currentFilter);
+
+                renderJobs(filtered);
+            } catch (err) {
+                console.error("Error fetching applications:", err);
+            }
+        }
+
+        function renderJobs(apps) {
+            if (apps.length === 0) {
+                jobsList.innerHTML = `<p class="empty-msg">No jobs found for this category.</p>`;
+                return;
+            }
+
+            jobsList.innerHTML = apps.map(app => `
+                <div class="tracker-card">
+                    <div class="tracker-header">
+                        <strong>Job ID: ${app.jobId}</strong>
+                        <span class="status-badge ${app.status}">${app.status}</span>
+                    </div>
+                    <p>Proposal: ${app.proposal.substring(0, 60)}...</p>
+                    ${app.status === 'assigned' ? `<a href="submit-work.html?jobId=${app.jobId}" class="btn-submit-work">Submit Deliverable</a>` : ''}
+                </div>
+            `).join('');
+        }
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentFilter = e.target.dataset.status;
+                
+                // Καλούμε τη συνάρτηση περνώντας τον ενεργό χρήστη
+                if (auth.currentUser) {
+                    fetchMyJobs(auth.currentUser);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

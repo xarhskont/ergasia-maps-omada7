@@ -1,0 +1,76 @@
+<!-- submit-work.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Deliverable | FreelanceHub</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body>
+    <header id="main-header"></header>
+    
+    <main class="submission-container">
+        <div class="submit-card">
+            <h1>Project Delivery</h1>
+            <p>Upload your final files and submission notes below.</p>
+            
+            <form id="delivery-form">
+                <div class="form-group">
+                    <label for="file-upload">Upload Deliverable (PDF, ZIP, DOCX)</label>
+                    <input type="file" id="file-upload" required>
+                </div>
+                <div class="form-group">
+                    <label for="notes">Final Notes for Employer</label>
+                    <textarea id="notes" rows="4" placeholder="Any specific instructions or comments about the final work..."></textarea>
+                </div>
+                <button type="submit" class="btn-submit">Submit Final Work</button>
+            </form>
+        </div>
+    </main>
+
+    <footer id="main-footer"></footer>
+
+    <script type="module">
+        import { auth, db } from '../assets/js/firebase-config.js';
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
+        import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { loadHeader, loadFooter } from '../assets/js/layout.js';
+
+        loadHeader();
+        loadFooter();
+
+        const storage = getStorage();
+        const urlParams = new URLSearchParams(window.location.search);
+        const jobId = urlParams.get('jobId');
+
+        document.getElementById('delivery-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = document.getElementById('file-upload').files[0];
+            const notes = document.getElementById('notes').value;
+            
+            if (!file) return;
+
+            try {
+                // 1. Upload file to Firebase Storage
+                const storageRef = ref(storage, `deliverables/${jobId}_${file.name}`);
+                await uploadBytes(storageRef, file);
+                const downloadURL = await getDownloadURL(storageRef);
+
+                // 2. Update job status and add deliverable link to jobs collection
+                await updateDoc(doc(db, "jobs", jobId), {
+                    status: 'submitted',
+                    deliverableUrl: downloadURL,
+                    submissionNotes: notes,
+                    submittedAt: new Date()
+                });
+
+                alert("Work submitted successfully! The employer will be notified.");
+                window.location.href = 'my-jobs.html';
+            } catch (err) {
+                alert("Submission failed: " + err.message);
+            }
+        });
+    </script>
+</body>
+</html>

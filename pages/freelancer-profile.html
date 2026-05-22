@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freelancer Profile | FreelanceHub</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body>
+    <header id="main-header"></header>
+    
+    <main class="profile-container">
+        <div class="profile-card">
+            <h1>My Profile</h1>
+            <form id="profile-form">
+                <div class="form-group">
+                    <label for="display-name">Full Name</label>
+                    <input type="text" id="display-name" name="displayName" required>
+                </div>
+                <div class="form-group">
+                    <label for="bio">Professional Bio</label>
+                    <textarea id="bio" name="bio" rows="4" placeholder="Tell us about your experience..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="skills">Skills (Comma separated)</label>
+                    <input type="text" id="skills" name="skills" placeholder="e.g. JavaScript, React, Python">
+                </div>
+                <div class="form-group">
+                    <label for="portfolio">Portfolio Link</label>
+                    <input type="url" id="portfolio" name="portfolio" placeholder="https://...">
+                </div>
+                <button type="submit" class="btn-save">Save Changes</button>
+            </form>
+
+            <div style="margin-top: 30px; text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                <a href="#" id="logout-btn" title="Logout" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; color: var(--error-color); font-weight: 600; padding: 8px 16px; border: 2px solid var(--error-color); border-radius: 20px; transition: background 0.2s;">
+                    <img src="https://cdn-icons-png.freepik.com/512/15080/15080136.png" alt="Logout" style="width: 18px; height: 18px; opacity: 0.8;">
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="stats-container">
+            <h3>Reputation</h3>
+            <div id="rating-summary">
+                <span id="avg-rating">0.0</span> ★ 
+                <span id="total-reviews">(0 reviews)</span>
+            </div>
+            <div id="reviews-list">
+                </div>
+        </div>
+    </main>
+
+    <footer id="main-footer"></footer>
+
+    <script type="module">
+        import { auth, db } from '../assets/js/firebase-config.js';
+        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+        import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { loadHeader, loadFooter } from '../assets/js/layout.js';
+        import { getUserRatings } from '../assets/js/rating.js';
+
+        loadHeader();
+        loadFooter();
+
+        const profileForm = document.getElementById('profile-form');
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = '../login.html';
+            } else {
+                loadFreelancerData(user);
+            }
+        });
+
+        async function loadFreelancerData(user) {
+            try {
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    document.getElementById('display-name').value = data.fullName || ''; 
+                    document.getElementById('bio').value = data.bio || '';
+                    document.getElementById('skills').value = (data.skills || []).join(', ');
+                    document.getElementById('portfolio').value = data.portfolio || '';
+                }
+            } catch (err) {
+                console.error("Error loading profile:", err);
+            }
+
+            try {
+                const ratings = await getUserRatings(user.uid);
+                document.getElementById('avg-rating').innerText = ratings.average;
+                document.getElementById('total-reviews').innerText = `(${ratings.totalReviews} reviews)`;
+                document.getElementById('reviews-list').innerHTML = ratings.reviews.map(r => `
+                    <div class="review-card">
+                        <strong>${r.rating} ★</strong>
+                        <p>${r.comment}</p>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error("Error loading reviews:", err);
+            }
+        }
+
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const updatedData = {
+                fullName: document.getElementById('display-name').value, 
+                bio: document.getElementById('bio').value,
+                skills: document.getElementById('skills').value.split(',').map(s => s.trim()),
+                portfolio: document.getElementById('portfolio').value,
+                updatedAt: new Date()
+            };
+
+            try {
+                await updateDoc(doc(db, "users", user.uid), updatedData);
+                alert("Profile updated successfully!");
+            } catch (err) {
+                alert("Error updating profile: " + err.message);
+            }
+        });
+
+        // Logout Logic
+        document.getElementById('logout-btn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                await auth.signOut();
+                alert("Logged out successfully!");
+                window.location.href = "../index.html";
+            } catch (err) {
+                alert("Error during logout: " + err.message);
+            }
+        });
+    </script>
+</body>
+</html>

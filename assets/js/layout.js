@@ -9,28 +9,40 @@ export async function loadHeader() {
     if (!header) return;
 
     const user = auth.currentUser;
-    const userInitial = user ? (user.displayName || 'U').charAt(0).toUpperCase() : 'U';
     const brandPurple = '#7c3aed';
 
     let navLinks = '';
+    let logoHref = '/index.html'; // Προεπιλογή: Αν δεν είσαι συνδεδεμένος, πας στο Welcome
+
     if (user) {
+        const userInitial = (user.displayName || 'U').charAt(0).toUpperCase();
         let dashboardLink = '';
+        let profilePath = '/pages/profile.html';
+        let dashboardPath = '/pages/my-jobs.html'; 
+        
         try {
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             if (userDoc.exists()) {
                 const role = userDoc.data().role;
-                const dashboardPath = role === 'employer' ? '/pages/employer-dashboard.html' : '/pages/freelancer-dashboard.html';
+                dashboardPath = role === 'employer' ? '/pages/employer-dashboard.html' : '/pages/my-jobs.html';
                 dashboardLink = `<li><a href="${dashboardPath}">Dashboard</a></li>`;
+                
+                if (role === 'freelancer') {
+                    profilePath = '/pages/freelancer-profile.html';
+                }
             }
         } catch (err) {
             console.error("Error fetching role for header:", err);
         }
 
+        // 1η ΔΙΟΡΘΩΣΗ: Το λογότυπο λειτουργεί πλέον ως Home για τους συνδεδεμένους (πάει στο Dashboard)
+        logoHref = dashboardPath;
+
+        // 2η ΔΙΟΡΘΩΣΗ: Αφαιρέθηκε το ελαττωματικό "Home" link. Έμειναν μόνο τα απαραίτητα.
         navLinks = `
-            <li><a href="/index.html">Home</a></li>
             ${dashboardLink}
-            <li><a href="/pages/search.html">Search</a></li>
-            <li><a href="/pages/profile.html" title="Profile" style="display: flex; align-items: center; justify-content: center;">
+            <li><a href="/pages/freelancer-marketplace.html">Search</a></li>
+            <li><a href="${profilePath}" title="Profile" style="display: flex; align-items: center; justify-content: center;">
                 <div style="
                     width: 32px; 
                     height: 32px; 
@@ -47,12 +59,16 @@ export async function loadHeader() {
             </a></li>
         `;
     } else {
-        navLinks = ''; 
+        // 3η ΔΙΟΡΘΩΣΗ: Όταν ο χρήστης ΔΕΝ είναι συνδεδεμένος, εμφανίζουμε ξανά το Login & Register όπως στο 1ο βίντεο
+        navLinks = `
+            <li><a href="/login.html">Login</a></li>
+            <li><a href="/register.html">Register</a></li>
+        `;
     }
 
     header.innerHTML = `
         <nav class="main-header">
-            <a href="/index.html" class="brand-logo">Job&gt;inder</a>
+            <a href="${logoHref}" class="brand-logo">Job&gt;inder</a>
             <ul class="nav-links">
                 ${navLinks}
             </ul>
@@ -76,14 +92,10 @@ export function loadFooter() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initial load
     loadHeader();
     loadFooter();
 
-    // Listen for auth state changes to update header dynamically
     onAuthStateChanged(auth, () => {
         loadHeader();
     });
 });
-
-

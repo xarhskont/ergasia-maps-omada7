@@ -1,56 +1,55 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Job>inder - Welcome</title>
+    <title>Welcome | Job>inder</title>
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body style="display: flex; flex-direction: column; min-height: 100vh;">
     <header id="main-header"></header>
     
-    <main>
-        <div class="rating-container" style="text-align: center;">
-            <h1 style="color: var(--primary-color);">Welcome to Job&gt;inder</h1>
-            <p>Find and complete micro-jobs quickly and reliably.</p>
-            <div id="auth-cta" style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
-                <!-- Buttons will be dynamically rendered based on auth status -->
+    <main style="display: flex; align-items: center; justify-content: center; flex: 1; text-align: center; padding: 2rem;">
+        <div class="rating-container" style="max-width: 500px;">
+            <h1 style="color: var(--primary-color); font-size: 2.5rem; margin-bottom: 0.5rem; font-weight: bold;">Welcome to Job&gt;inder</h1>
+            <p style="color: var(--secondary-color); font-size: 1.1rem; margin-bottom: 2rem;">Find and complete micro-jobs quickly, and reliably.</p>
+            
+            <div class="auth-buttons" id="cta-container" style="display: flex; justify-content: center; gap: 1rem; margin-top: 2rem;">
+                <button id="btn-login" class="btn-submit" style="margin: 0;" onclick="window.location.href='login.html'">Login to Continue</button>
+                <button id="btn-signup" class="btn-submit" style="margin: 0; background-color: transparent; color: var(--primary-color); border: 2px solid var(--primary-color);" onclick="window.location.href='register.html'">Create Account</button>
             </div>
         </div>
     </main>
 
     <footer id="main-footer"></footer>
-    
+
     <script type="module">
-        import { auth } from './assets/js/firebase-config.js';
-        import { loadHeader, loadFooter } from './assets/js/layout.js';
+        import { auth, db } from './assets/js/firebase-config.js';
         import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+        import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+        import { loadHeader, loadFooter } from './assets/js/layout.js';
 
         loadHeader();
         loadFooter();
 
-        const ctaContainer = document.getElementById('auth-cta');
-
-        // Use onAuthStateChanged to wait for Firebase to initialize the user session
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                ctaContainer.innerHTML = `
-                    <a href="pages/search.html" class="btn-submit" style="text-decoration: none; padding: 10px 20px; border-radius: 6px; width: auto;">Find Jobs</a>
-                    <a href="pages/profile.html" class="btn-submit" style="text-decoration: none; padding: 10px 20px; border-radius: 6px; width: auto; background: #6d28d9;">My Profile</a>
-                `;
-                // Refresh header to show user profile avatar
-                loadHeader();
-            } else {
-                ctaContainer.innerHTML = `
-                    <a href="login.html" class="btn-submit" style="text-decoration: none; padding: 10px 20px; border-radius: 6px; width: auto;">Login to Continue</a>
-                    <a href="register.html" class="btn-submit" style="text-decoration: none; padding: 10px 20px; border-radius: 6px; width: auto; background: #4c1d95;">Create Account</a>
-                `;
-                loadHeader();
+        // Δυναμική αλλαγή των κουμπιών αν ο χρήστης είναι ήδη συνδεδεμένος
+        onAuthStateChanged(auth, async (user) => {
+            const ctaContainer = document.getElementById('cta-container');
+            if (user && ctaContainer) {
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    if (userDoc.exists()) {
+                        const role = userDoc.data().role;
+                        const dashboardPath = role === 'employer' ? 'pages/employer-dashboard.html' : 'pages/my-jobs.html';
+                        ctaContainer.innerHTML = `
+                            <button class="btn-submit" style="margin: 0; max-width: 250px;" onclick="window.location.href='${dashboardPath}'">Go to Dashboard</button>
+                        `;
+                    }
+                } catch (err) {
+                    console.error("Error updates CTA:", err);
+                }
             }
         });
     </script>
 </body>
-</html>
-
 </html>

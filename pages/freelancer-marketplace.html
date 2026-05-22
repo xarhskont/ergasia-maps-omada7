@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Marketplace | FreelanceHub</title>
+    <link rel="stylesheet" href="../assets/css/styles.css">
+</head>
+<body>
+    <header id="main-header"></header>
+    
+    <main class="marketplace-container">
+        <section class="filter-section">
+            <h1>Available Jobs</h1>
+            <div class="search-controls">
+                <input type="text" id="search-input" placeholder="Search by skill or keyword...">
+                <select id="budget-filter">
+                    <option value="all">All Budgets</option>
+                    <option value="low">$0 - $50</option>
+                    <option value="mid">$50 - $200</option>
+                    <option value="high">$200+</option>
+                </select>
+                <button id="filter-btn">Filter</button>
+            </div>
+        </section>
+
+        <div id="jobs-grid" class="jobs-grid">
+            <div class="loading-spinner">Loading awesome opportunities...</div>
+        </div>
+    </main>
+
+    <footer id="main-footer"></footer>
+
+    <script type="module">
+        import { auth, db } from '../assets/js/firebase-config.js';
+        import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { loadHeader, loadFooter } from '../assets/js/layout.js';
+
+        loadHeader();
+        loadFooter();
+
+        const jobsGrid = document.getElementById('jobs-grid');
+        const searchInput = document.getElementById('search-input');
+        const budgetSelect = document.getElementById('budget-filter');
+
+        // Local array to store production jobs from Firestore fetch
+        let allOpenJobs = []; 
+
+        async function fetchOpenJobs() {
+            try {
+                // Production logic connecting to Firestore data stream
+                const q = query(collection(db, "jobs"), where("status", "==", "open"));
+                const querySnapshot = await getDocs(q);
+                
+                allOpenJobs = []; 
+                querySnapshot.forEach((doc) => {
+                    allOpenJobs.push({ id: doc.id, ...doc.data() });
+                });
+
+                renderJobs(allOpenJobs);
+                return allOpenJobs;
+            } catch (err) {
+                console.error("Error fetching jobs:", err);
+                jobsGrid.innerHTML = `<p class="error-msg">Failed to load jobs. Please try again later.</p>`;
+            }
+        }
+
+        function renderJobs(jobsToRender) {
+            if (!jobsToRender || jobsToRender.length === 0) {
+                jobsGrid.innerHTML = `<p class="empty-msg">No jobs found matching your criteria.</p>`;
+                return;
+            }
+
+            jobsGrid.innerHTML = jobsToRender.map(job => {
+                // Format Firestore server timestamps safely
+                const deadlineDate = job.deadline && typeof job.deadline.toDate === 'function' 
+                    ? job.deadline.toDate().toLocaleDateString() 
+                    : job.deadline;
+
+                return `
+                    <div class="job-card">
+                        <h3>${job.title}</h3>
+                        <p class="job-excerpt">${job.description.substring(0, 100)}...</p>
+                        <div class="job-meta">
+                            <span class="budget">$${job.budget}</span>
+                            <span class="deadline">Due: ${deadlineDate}</span>
+                        </div>
+                        <a href="job-details.html?id=${job.id}" class="btn-view">View Details</a>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Live filtration loop for filtering the returned collection
+        document.getElementById('filter-btn').addEventListener('click', () => {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const budgetFilter = budgetSelect.value;
+            
+            const filtered = allOpenJobs.filter(job => {
+                const matchesText = job.title.toLowerCase().includes(searchTerm) || 
+                                    job.description.toLowerCase().includes(searchTerm);
+                
+                let matchesBudget = true;
+                const budget = Number(job.budget) || 0;
+                
+                if (budgetFilter === 'low') {
+                    matchesBudget = budget <= 50;
+                } else if (budgetFilter === 'mid') {
+                    matchesBudget = budget > 50 && budget <= 200;
+                } else if (budgetFilter === 'high') {
+                    matchesBudget = budget > 200;
+                }
+
+                return matchesText && matchesBudget;
+            });
+
+            renderJobs(filtered);
+        });
+
+        fetchOpenJobs();
+    </script>
+</body>
+</html>
