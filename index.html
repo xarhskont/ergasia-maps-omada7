@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome | Job>inder</title>
-    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="/assets/css/styles.css">
 </head>
 <body style="display: flex; flex-direction: column; min-height: 100vh;">
     <header id="main-header"></header>
@@ -15,8 +15,8 @@
             <p style="color: var(--secondary-color); font-size: 1.1rem; margin-bottom: 2rem;">Find and complete micro-jobs quickly, and reliably.</p>
             
             <div class="auth-buttons" id="cta-container" style="display: flex; justify-content: center; gap: 1rem; margin-top: 2rem;">
-                <button id="btn-login" class="btn-submit" style="margin: 0;" onclick="window.location.href='login.html'">Login to Continue</button>
-                <button id="btn-signup" class="btn-submit" style="margin: 0; background-color: transparent; color: var(--primary-color); border: 2px solid var(--primary-color);" onclick="window.location.href='register.html'">Create Account</button>
+                <button id="btn-login" class="btn-submit" style="margin: 0;" onclick="window.location.href='/login.html'">Login to Continue</button>
+                <button id="btn-signup" class="btn-submit" style="margin: 0; background-color: transparent; color: var(--primary-color); border: 2px solid var(--primary-color);" onclick="window.location.href='/register.html'">Create Account</button>
             </div>
         </div>
     </main>
@@ -24,10 +24,10 @@
     <footer id="main-footer"></footer>
 
     <script type="module">
-        import { auth, db } from './assets/js/firebase-config.js';
+        import { auth, db } from '/assets/js/firebase-config.js';
         import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
         import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
-        import { loadHeader, loadFooter } from './assets/js/layout.js';
+        import { loadHeader, loadFooter } from '/assets/js/layout.js';
 
         loadHeader();
         loadFooter();
@@ -40,7 +40,7 @@
                     const userDoc = await getDoc(doc(db, 'users', user.uid));
                     if (userDoc.exists()) {
                         const role = userDoc.data().role;
-                        const dashboardPath = role === 'employer' ? 'pages/employer-dashboard.html' : 'pages/my-jobs.html';
+                         const dashboardPath = role === 'employer' ? '/pages/employer-dashboard.html' : '/pages/my-jobs.html';
                         ctaContainer.innerHTML = `
                             <button class="btn-submit" style="margin: 0; max-width: 250px;" onclick="window.location.href='${dashboardPath}'">Go to Dashboard</button>
                         `;

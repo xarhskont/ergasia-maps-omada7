@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submit Deliverable | FreelanceHub</title>
-    <link rel="stylesheet" href="../assets/css/styles.css">
+    <link rel="stylesheet" href="/assets/css/styles.css">
 </head>
 <body>
     <header id="main-header"></header>
@@ -32,10 +32,10 @@
     <footer id="main-footer"></footer>
 
     <script type="module">
-        import { auth, db } from '../assets/js/firebase-config.js';
+        import { auth, db } from '/assets/js/firebase-config.js';
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
         import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-        import { loadHeader, loadFooter } from '../assets/js/layout.js';
+        import { loadHeader, loadFooter } from '/assets/js/layout.js';
 
         loadHeader();
         loadFooter();
@@ -66,7 +66,7 @@
                 });
 
                 alert("Work submitted successfully! The employer will be notified.");
-                window.location.href = 'my-jobs.html';
+                 window.location.href = '/pages/my-jobs.html';
             } catch (err) {
                 alert("Submission failed: " + err.message);
             }

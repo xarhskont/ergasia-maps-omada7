@@ -1,6 +1,6 @@
 // layout.js
 import { auth } from './firebase-config.js';
-import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 import { getDoc, doc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 import { db } from './firebase-config.js';
 
@@ -25,11 +25,16 @@ export async function loadHeader() {
             if (userDoc.exists()) {
                 const role = userDoc.data().role;
                 dashboardPath = role === 'employer' ? '/pages/employer-dashboard.html' : '/pages/my-jobs.html';
-                dashboardLink = `<li><a href="${dashboardPath}">Dashboard</a></li>`;
                 
-                if (role === 'freelancer') {
+                if (role === 'employer') {
+                    dashboardLink = `<li><a href="${dashboardPath}">My Jobs</a></li>
+                                     <li><a href="/pages/create-job.html">Post a Job</a></li>`;
+                    profilePath = '/pages/employer-profile.html';
+                } else {
+                    dashboardLink = `<li><a href="${dashboardPath}">Dashboard</a></li>`;
                     profilePath = '/pages/freelancer-profile.html';
                 }
+
             }
         } catch (err) {
             console.error("Error fetching role for header:", err);
@@ -42,6 +47,7 @@ export async function loadHeader() {
         navLinks = `
             ${dashboardLink}
             <li><a href="/pages/freelancer-marketplace.html">Search</a></li>
+            <li><a href="#" id="logout-btn" style="color: var(--error-color); font-weight: 600;">Logout</a></li>
             <li><a href="${profilePath}" title="Profile" style="display: flex; align-items: center; justify-content: center;">
                 <div style="
                     width: 32px; 
@@ -74,6 +80,22 @@ export async function loadHeader() {
             </ul>
         </nav>
     `;
+
+    if (user) {
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                try {
+                    await signOut(auth);
+                    window.location.href = '/index.html';
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    alert('Error logging out. Please try again.');
+                }
+            });
+        }
+    }
 }
 
 export function loadFooter() {
