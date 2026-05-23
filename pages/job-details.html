@@ -4,29 +4,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Job Details & Review | Job>inder</title>
+    <title>Job Details | FreelanceHub</title>
     <link rel="stylesheet" href="/assets/css/styles.css">
 </head>
-<body>
+<body style="background-color: #f1f5f9; min-height: 100vh;">
     <header id="main-header"></header>
     
-    <main>
-        <div class="rating-container" id="rating-section" style="display:none;">
-            <h2 style="text-align: center;">Rate your experience</h2>
+    <main class="container" style="padding: 20px 0;">
+        <!-- Job Information Section -->
+        <div id="job-info-section" class="job-card" style="display: none; max-width: 800px; margin: 20px auto; padding: 30px; background: white; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
+            <h1 id="job-title" style="margin-bottom: 20px; color: #1e293b; font-size: 2rem;">Loading Job...</h1>
+            
+            <div class="job-meta-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                <div class="meta-item" style="padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; text-align: center;">
+                    <strong style="display: block; color: #64748b; font-size: 0.8rem; text-transform: uppercase;">Budget</strong>
+                    <span id="job-budget" style="font-size: 1.2rem; font-weight: 700; color: #0f172a;">-</span>
+                </div>
+                <div class="meta-item" style="padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; text-align: center;">
+                    <strong style="display: block; color: #64748b; font-size: 0.8rem; text-transform: uppercase;">Deadline</strong>
+                    <span id="job-deadline" style="font-size: 1.2rem; font-weight: 700; color: #0f172a;">-</span>
+                </div>
+                <div class="meta-item" style="padding: 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; text-align: center;">
+                    <strong style="display: block; color: #64748b; font-size: 0.8rem; text-transform: uppercase;">Status</strong>
+                    <span id="job-status" style="font-size: 1.2rem; font-weight: 700; color: #0f172a;">-</span>
+                </div>
+            </div>
+
+            <div class="job-description-box" style="margin-bottom: 30px;">
+                <h3 style="border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px; color: #334155;">Job Description</h3>
+                <p id="job-description" style="line-height: 1.8; color: #475569; white-space: pre-wrap;"></p>
+            </div>
+
+            <div id="action-container" style="display: flex; gap: 15px; justify-content: center; align-items: center; margin-top: 30px; min-height: 50px;">
+                <!-- Buttons injected here -->
+            </div>
+        </div>
+
+        <!-- Rating Section -->
+        <div class="rating-container" id="rating-section" style="display:none; max-width: 600px; margin: 30px auto; padding: 20px; background: white; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+            <h2 style="text-align: center; margin-bottom: 20px; color: #1e293b;">Rate your experience</h2>
             <form id="rating-form">
-                <div class="form-group">
-                    <div class="star-rating">
-                        <input type="radio" id="star5" name="rating" value="5"><label for="star5">★</label>
-                        <input type="radio" id="star4" name="rating" value="4"><label for="star4">★</label>
-                        <input type="radio" id="star3" name="rating" value="3"><label for="star3">★</label>
-                        <input type="radio" id="star2" name="rating" value="2"><label for="star2">★</label>
-                        <input type="radio" id="star1" name="rating" value="1"><label for="star1">★</label>
+                <div class="form-group" style="text-align: center; margin-bottom: 20px;">
+                    <div class="star-rating" style="font-size: 2rem; cursor: pointer;">
+                        <input type="radio" id="star5" name="rating" value="5" style="display:none;"><label for="star5">★</label>
+                        <input type="radio" id="star4" name="rating" value="4" style="display:none;"><label for="star4">★</label>
+                        <input type="radio" id="star3" name="rating" value="3" style="display:none;"><label for="star3">★</label>
+                        <input type="radio" id="star2" name="rating" value="2" style="display:none;"><label for="star2">★</label>
+                        <input type="radio" id="star1" name="rating" value="1" style="display:none;"><label for="star1">★</label>
                     </div>
                 </div>
-                <div class="form-group">
-                    <textarea id="comment" placeholder="Leave a comment..."></textarea>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <textarea id="comment" placeholder="Leave a comment..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: inherit;"></textarea>
                 </div>
-                <button type="submit" class="btn-submit">Submit Review</button>
+                <button type="submit" class="btn-submit" style="width: 100%; cursor: pointer;">Submit Review</button>
             </form>
         </div>
     </main>
@@ -34,41 +64,142 @@
     <footer id="main-footer"></footer>
 
     <script type="module">
+        import { auth, db } from '/assets/js/firebase-config.js';
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
         import { submitRating } from '/assets/js/rating.js';
         import { loadHeader, loadFooter } from '/assets/js/layout.js';
         
-        // Manually trigger layout since we are in a subfolder and script logic varies
         loadHeader();
         loadFooter();
 
-        const mockJob = { id: "job123", status: "completed", freelancerId: "userA", employerId: "userB" };
-        const currentUser = "userB"; 
-        const revieweeId = mockJob.freelancerId;
-        const type = "employer_to_freelancer";
+        const params = new URLSearchParams(window.location.search);
+        const jobId = params.get('id');
 
-        if (mockJob.status === "completed") {
-            document.getElementById('rating-section').style.display = 'block';
-        }
-
-        document.getElementById('rating-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const rating = document.querySelector('input[name="rating"]:checked')?.value;
-            const comment = document.getElementById('comment').value;
-
-            if (!rating) {
-                alert("Please select a rating");
+        async function initPage() {
+            if (!jobId) {
+                alert("No job ID provided.");
+                window.location.href = '/pages/freelancer-marketplace.html';
                 return;
             }
 
             try {
-                await submitRating(mockJob.id, revieweeId, parseInt(rating), comment, type);
-                alert("Rating submitted successfully!");
-                document.getElementById('rating-section').style.display = 'none';
-            } catch (err) {
-                alert("Error submitting rating: " + err.message);
+                const jobDoc = await getDoc(doc(db, "jobs", jobId));
+                if (!jobDoc.exists()) {
+                    alert("Job not found.");
+                    window.location.href = '/pages/freelancer-marketplace.html';
+                    return;
+                }
+
+                const jobData = jobDoc.data();
+                
+                // 1. Display Job Info
+                document.getElementById('job-info-section').style.display = 'block';
+                document.getElementById('job-title').innerText = jobData.title || 'Untitled Job';
+                document.getElementById('job-budget').innerText = jobData.budget ? `$${jobData.budget}` : 'N/A';
+                document.getElementById('job-description').innerText = jobData.description || 'No description provided.';
+                document.getElementById('job-status').innerText = (jobData.status || 'open').toUpperCase();
+                
+                const deadline = jobData.deadline && typeof jobData.deadline.toDate === 'function' 
+                    ? jobData.deadline.toDate().toLocaleDateString() 
+                    : jobData.deadline;
+                document.getElementById('job-deadline').innerText = deadline || 'N/A';
+
+                // 2. Handle Role-Based Actions
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        renderActions(user, jobData);
+                    } else {
+                        // Not logged in: show only back button
+                        renderActions({ role: 'guest', uid: null }, jobData);
+                    }
+                });
+
+            } catch (error) {
+                console.error("Initialization Error:", error);
+                alert("An error occurred while loading the job details.");
             }
-        });
+        }
+
+        function renderActions(user, job) {
+            const container = document.getElementById('action-container');
+            container.innerHTML = '';
+
+            const role = user.role ? user.role.toLowerCase().trim() : 'guest';
+            const status = job.status ? job.status.toLowerCase().trim() : 'open';
+            
+            console.log(`DEBUG: Detected Role: "${role}" | Detected Status: "${status}"`);
+
+            // Back Button (Always present)
+            const backBtn = document.createElement('a');
+            backBtnT_ la.href = '/pages/freelancer-marketplace.html';
+            backBtn.href = '/pages/freelancer-marketplace.html';
+            backBtn.className = 'btn-view';
+            backBtn.style.cssText = 'text-decoration:none; padding:12px 24px; background:#8b5cf6; color:white; border-radius:10px; font-weight:600; flex:1; text-align:center; max-width:200px;';
+            backBtn.innerText = 'Go Back';
+            container.appendChild(backBtn);
+
+            if (status === 'completed') {
+                const isEmployer = role === 'employer' && job.employerId === user.uid;
+                const isFreelancer = role === 'freelancer' && job.freelancerId === user.uid;
+
+                if (isEmployer || isFreelancer) {
+                    document.getElementById('rating-section').style.display = 'block';
+                    const type = isEmployer ? 'employer_to_freelancer' : 'freelancer_to_employer';
+                    const revieweeId = isEmployer ? job.freelancerId : job.employerId;
+                    attachRatingEvent(revieweeId, type);
+                }
+            } else if (status === 'open') {
+                if (role === 'freelancer') {
+                    const applyBtn = document.createElement('a');
+                    applyBtn.href = `/pages/apply-job.html?id=${jobId}`;
+                    applyBtn.className = 'btn-submit';
+                    applyBtn.style.cssText = 'text-decoration:none; padding:12px 24px; background:#8b5cf6; color:white; border-radius:10px; font-weight:600; flex:1; text-align:center; max-width:200px;';
+                    applyBtn.innerText = 'Apply for this Job';
+                    container.appendChild(applyBtn);
+                } else if (role === 'employer' && job.employerId === user.uid) {
+                    const viewAppsBtn = document.createElement('a');
+                    viewAppsBtn.href = `/pages/job-applications.html?id=${jobId}`;
+                    viewAppsBtn.className = 'btn-submit';
+                    viewAppsBtn.style.cssText = 'text-decoration:none; padding:12px 24px; background:#8b5cf6; color:white; border-radius:10px; font-weight:600; flex:1; text-align:center; max-width:200px;';
+                    viewAppsBtn.innerText = 'View Applications';
+                    container.appendChild(viewAppsBtn);
+                }
+            } else if (status === 'assigned') {
+                if (role === 'freelancer' && job.freelancerId === user.uid) {
+                    const submitBtn = document.createElement('a');
+                    submitBtn.href = `/pages/submit-work.html?id=${jobId}`;
+                    submitBtn.className = 'btn-submit';
+                    submitBtn.style.cssText = 'text-decoration:none; padding:12px 24px; background:#8b5cf6; color:white; border-radius:10px; font-weight:600; flex:1; text-align:center; max-width:200px;';
+                    submitBtn.innerText = 'Submit Work';
+                    container.appendChild(submitBtn);
+                }
+            } else {
+                const statusMsg = document.createElement('p');
+                statusMsg.style.cssText = 'color: gray; font-size: 0.9rem; text-align: center; width: 100%;';
+                statusMsg.innerText = `Job is currently ${job.status}. Applications are not accepted.`;
+                container.appendChild(statusMsg);
+            }
+        }
+
+        function attachRatingEvent(revieweeId, type) {
+            const form = document.getElementById('rating-form');
+            form.onsubmit = async (e) => {
+                e.preventDefault();
+                const rating = document.querySelector('input[name="rating"]:checked')?.value;
+                const comment = document.getElementById('comment').value;
+                if (!rating) { alert("Please select a rating"); return; }
+                try {
+                    await submitRating(jobId, revieweeId, parseInt(rating), comment, type);
+                    alert("Rating submitted successfully!");
+                    document.getElementById('rating-section').style.display = 'none';
+                } catch (err) {
+                    alert("Error submitting rating: " + err.message);
+                }
+            };
+        }
+
+        initPage();
     </script>
 </body>
 </html>
-

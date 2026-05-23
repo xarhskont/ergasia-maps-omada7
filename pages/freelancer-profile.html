@@ -10,9 +10,36 @@
     <header id="main-header"></header>
     
     <main class="profile-container">
-        <div class="profile-card">
-            <h1>My Profile</h1>
-            <form id="profile-form">
+        <div class="profile-card" id="profile-card">
+            <h1 id="profile-title">My Profile</h1>
+            
+            <!-- View Mode: For Employers/Other Users -->
+            <div id="view-mode" style="display: none;">
+                <div class="profile-info-section">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <p id="view-name" class="view-value"></p>
+                    </div>
+                    <div class="form-group">
+                        <label>Professional Bio</label>
+                        <p id="view-bio" class="view-value"></p>
+                    </div>
+                    <div class="form-group">
+                        <label>Skills</label>
+                        <p id="view-skills" class="view-value"></p>
+                    </div>
+                    <div class="form-group">
+                        <label>Portfolio</label>
+                        <p id="view-portfolio" class="view-value"></p>
+                    </div>
+                </div>
+                <div style="margin-top: 20px; text-align: center;">
+                    <button id="back-btn" class="btn-save">Back to Applications</button>
+                </div>
+            </div>
+
+            <!-- Edit Mode: For the Profile Owner -->
+            <form id="profile-form" style="display: none;">
                 <div class="form-group">
                     <label for="display-name">Full Name</label>
                     <input type="text" id="display-name" name="displayName" required>
@@ -32,12 +59,6 @@
                 <button type="submit" class="btn-save">Save Changes</button>
             </form>
 
-            <div style="margin-top: 30px; text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-                <a href="#" id="logout-btn" title="Logout" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; color: var(--error-color); font-weight: 600; padding: 8px 16px; border: 2px solid var(--error-color); border-radius: 20px; transition: background 0.2s;">
-                    <img src="https://cdn-icons-png.freepik.com/512/15080/15080136.png" alt="Logout" style="width: 18px; height: 18px; opacity: 0.8;">
-                    <span>Logout</span>
-                </a>
-            </div>
         </div>
 
         <div class="stats-container">
@@ -64,31 +85,58 @@
         loadFooter();
 
         const profileForm = document.getElementById('profile-form');
+        const viewModeDiv = document.getElementById('view-mode');
+        const profileTitle = document.getElementById('profile-title');
+        
+        // Get ID from URL
+        const params = new URLSearchParams(window.location.search);
+        const profileId = params.get('id');
 
         onAuthStateChanged(auth, (user) => {
             if (!user) {
                  window.location.href = '/login.html';
             } else {
-                loadFreelancerData(user);
+                // If no profileId in URL, assume the user is viewing their own profile
+                const targetId = profileId || user.uid;
+                loadFreelancerData(targetId, user.uid);
             }
         });
 
-        async function loadFreelancerData(user) {
+        async function loadFreelancerData(targetId, currentUserId) {
             try {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
+                const userDoc = await getDoc(doc(db, "users", targetId));
                 if (userDoc.exists()) {
                     const data = userDoc.data();
-                    document.getElementById('display-name').value = data.fullName || ''; 
-                    document.getElementById('bio').value = data.bio || '';
-                    document.getElementById('skills').value = (data.skills || []).join(', ');
-                    document.getElementById('portfolio').value = data.portfolio || '';
+                    
+                    // Check if this is the owner or a viewer
+                    if (targetId === currentUserId) {
+                        // EDIT MODE
+                        profileTitle.innerText = 'My Profile';
+                        viewModeDiv.style.display = 'none';
+                        profileForm.style.display = 'block';
+                        
+                        document.getElementById('display-name').value = data.fullName || ''; 
+                        document.getElementById('bio').value = data.bio || '';
+                        document.getElementById('skills').value = (data.skills || []).join(', ');
+                        document.getElementById('portfolio').value = data.portfolio || '';
+                    } else {
+                        // VIEW MODE
+                        profileTitle.innerText = 'Freelancer Profile';
+                        viewModeDiv.style.display = 'block';
+                        profileForm.style.display = 'none';
+                        
+                        document.getElementById('view-name').innerText = data.fullName || 'N/A';
+                        document.getElementById('view-bio').innerText = data.bio || 'No bio provided.';
+                        document.getElementById('view-skills').innerText = (data.skills || []).join(', ') || 'None';
+                        document.getElementById('view-portfolio').innerText = data.portfolio || 'No portfolio linked';
+                    }
                 }
             } catch (err) {
                 console.error("Error loading profile:", err);
             }
 
             try {
-                const ratings = await getUserRatings(user.uid);
+                const ratings = await getUserRatings(targetId);
                 document.getElementById('avg-rating').innerText = ratings.average;
                 document.getElementById('total-reviews').innerText = `(${ratings.totalReviews} reviews)`;
                 document.getElementById('reviews-list').innerHTML = ratings.reviews.map(r => `
@@ -101,6 +149,16 @@
                 console.error("Error loading reviews:", err);
             }
         }
+
+        // Back Button Logic
+        document.getElementById('back-btn')?.addEventListener('click', () => {
+            const referrer = document.referrer;
+            if (referrer && referrer.includes('job-applications.html')) {
+                window.location.href = referrer;
+            } else {
+                window.location.href = '/pages/employer-dashboard.html';
+            }
+        });
 
         profileForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -120,18 +178,6 @@
                 alert("Profile updated successfully!");
             } catch (err) {
                 alert("Error updating profile: " + err.message);
-            }
-        });
-
-        // Logout Logic
-        document.getElementById('logout-btn').addEventListener('click', async (e) => {
-            e.preventDefault();
-            try {
-                await auth.signOut();
-                alert("Logged out successfully!");
-                 window.location.href = "/index.html";
-            } catch (err) {
-                alert("Error during logout: " + err.message);
             }
         });
     </script>

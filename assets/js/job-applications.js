@@ -17,63 +17,89 @@ async function fetchApplications() {
         return;
     }
 
-    try {
-        const jobDoc = await getDoc(doc(db, 'jobs', jobId));
-        if (!jobDoc.exists()) {
-            appsGrid.innerHTML = '<p class="error-msg">Job not found.</p>';
-            return;
-        }
-        
-        const jobData = jobDoc.data();
-        titleDisplay.innerText = jobData.title;
-
-        // In a real app, we would query an 'applications' collection where jobId == jobId
-        // For now, we'll look for users with role 'freelancer' as a mockup of candidates
-        const q = query(collection(db, 'users'), where('role', '==', 'freelancer'));
-        const querySnapshot = await getDocs(q);
-
-        appsGrid.innerHTML = '';
-        if (querySnapshot.empty) {
-            appsGrid.innerHTML = '<p class="empty-msg">No one has applied to this job yet.</p>';
-            return;
-        }
-
-        querySnapshot.forEach((userDoc) => {
-            const user = userDoc.data();
-            const uid = userDoc.id;
+        try {
+            const jobDoc = await getDoc(doc(db, 'jobs', jobId));
+            if (!jobDoc.exists()) {
+                appsGrid.innerHTML = '<p class="error-msg">Job not found.</p>';
+                return;
+            }
             
-            const card = document.createElement('div');
-            card.className = 'job-card';
-            card.innerHTML = `
-                <h3>${user.fullName}</h3>
-                <p class="job-excerpt">${user.bio || 'No bio provided.'}</p>
-                <div class="job-meta">
-                    <span class="budget">Rating: ${user.averageRating || 'N/A'}</span>
-                    <span class="deadline">Skills: ${user.skills ? user.skills.join(', ') : 'None'}</span>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <a href="freelancer-profile.html?id=${uid}" target="_blank" class="btn-view" style="flex: 1; text-decoration: none; text-align: center;">View Profile</a>
-                    <button class="btn-submit" id="hire-${uid}" style="flex: 1; border: none; cursor: pointer;">Hire</button>
-                </div>
-            `;
-            appsGrid.appendChild(card);
+            const jobData = jobDoc.data();
+            titleDisplay.innerText = jobData.title;
 
-            document.getElementById(`hire-${uid}`).addEventListener('click', async () => {
-                if (confirm(`Are you sure you want to hire ${user.fullName}?`)) {
-                    await updateDoc(doc(db, 'jobs', jobId), {
-                        status: 'assigned',
-                        assignedFreelancerId: uid,
-                        assignedFreelancerName: user.fullName
-                    });
-                    alert('Freelancer hired successfully!');
-                    window.location.href = 'employer-dashboard.html';
-                }
-            });
-        });
-    } catch (error) {
-        console.error('Error fetching applications:', error);
-        appsGrid.innerHTML = '<p class="error-msg">Error loading applications.</p>';
-    }
+            // REAL LOGIC: Query the 'applications' collection for this specific jobId
+            const q = query(collection(db, 'applications'), where('jobId', '==', jobId));
+            const querySnapshot = await getDocs(q);
+
+            appsGrid.innerHTML = '';
+            if (querySnapshot.empty) {
+                appsGrid.innerHTML = '<p class="empty-msg">No one has applied to this job yet.</p>';
+                return;
+            }
+
+            // For each application, we need to fetch the freelancer's user details
+            for (const appDoc of querySnapshot.docs) {
+                const appData = appDoc.data();
+                const freelancerId = appData.freelancerId;
+                
+                // Fetch freelancer profile
+                const userDoc = await getDoc(doc(db, 'users', freelancerId));
+                const user = userDoc.exists() ? userDoc.data() : { fullName: 'Unknown Freelancer', bio: 'No profile available' };
+                
+                const card = document.createElement('div');
+                card.className = 'job-card';
+                card.innerHTML = `
+                    <h3>${user.fullName}</h3>
+                    <p class="job-excerpt">${user.bio || 'No bio provided.'}</p>
+                    <div class="job-meta">
+                        <span class="budget">Proposal: $${appData.bid || 'N/A'}</span>
+                        <span class="deadline">Est. Time: ${appData.estimatedTime || 'N/A'} days</span>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <a href="freelancer-profile.html?id=${freelancerId}" target="_blank" class="btn-view" style="flex: 1; text-decoration: none; text-align: center; padding: 8px; background: #e2e8f0; color: #475569; border-radius: 8px; font-weight: 600; font-size: 0.9rem;">View Profile</a>
+                        <button class="btn-submit" id="hire-${freelancerId}" style="flex: 1; border: none; cursor: pointer; padding: 8px; background: #8b5cf6; color: white; border-radius: 8px; font-weight: 600; font-size: 0.9rem;">Hire</button>
+                    </div>
+                `;
+                appsGrid.appendChild(card);
+
+                document.getElementById(`hire-${freelancerId}`).addEventListener('click', async () => {
+                    if (confirm(`Are you sure you want to hire ${user.fullName}?`)) {
+                        try {
+                            // 1. Update the Job document
+                            await updateDoc(doc(db, 'jobs', jobId), {
+                                status: 'assigned',
+                                assignedFreelancerId: freelancerId,
+                                assignedFreelancerName: user.fullName
+                            });
+
+                            // 2. Update the specific Application document to 'accepted'
+                            const appQ = query(collection(db, 'applications'), 
+                                where('jobId', '==', jobId), 
+                                where('freelancerId', '==', freelancerId)
+                            );
+                            const appSnapshot = await getDocs(appQ);
+                            
+                            if (!appSnapshot.empty) {
+                                const appDocId = appSnapshot.docs[0].id;
+                                await updateDoc(doc(db, 'applications', appDocId), {
+                                    status: 'assigned'
+                                });
+                            }
+
+                            alert('Freelancer hired successfully!');
+                            window.location.href = 'employer-dashboard.html';
+                        } catch (error) {
+                            console.error("Hire Error:", error);
+                            alert("Error during hiring process: " + error.message);
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching applications:', error);
+            appsGrid.innerHTML = '<p class="error-msg">Error loading applications.</p>';
+        }
+
 }
 
 fetchApplications();
