@@ -67,9 +67,9 @@ async function fetchJobs(statusFilter = 'all') {
                 <div style="color: var(--secondary-color); font-size: 0.9rem; margin-bottom: 1rem;">
                     Budget: <span style="color: var(--success-color); font-weight: bold;">$${job.budget}</span> | Deadline: ${job.deadline}
                 </div>
-                <div style="display: flex; gap: 10px;">
-                    <a href="job-applications.html?id=${id}" class="btn-submit-work" style="flex: 1; text-align: center;">View Apps</a>
-                    <button class="btn-delete" id="del-${id}" style="background: var(--error-color); color: white; border: none; border-radius: 6px; cursor: pointer; padding: 0 10px;">Delete</button>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    ${job.status === 'open' ? `<a href="job-applications.html?id=${id}" class="btn-submit-work" style="flex: 1; text-align: center; padding: 12px 0; font-weight: 600;">View Applications</a>` : ''}
+                    <button class="btn-delete" id="del-${id}" style="background: var(--error-color); color: white; border: none; border-radius: 6px; cursor: pointer; padding: 12px 15px; font-weight: 600;">Delete</button>
                 </div>
             `;
             jobsGrid.appendChild(card);
