@@ -34,6 +34,7 @@
     <script type="module">
         import { auth, db } from '/assets/js/firebase-config.js';
         import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
         import { loadHeader, loadFooter } from '/assets/js/layout.js';
 
         loadHeader();
@@ -43,10 +44,19 @@
         const searchInput = document.getElementById('search-input');
         const budgetSelect = document.getElementById('budget-filter');
 
-        // Local array to store production jobs from Firestore fetch
         let allOpenJobs = []; 
+        let currentUserRole = 'guest';
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUserRole = user.role ? user.role.toLowerCase().trim() : 'guest';
+            } else {
+                currentUserRole = 'guest';
+            }
+        });
 
         async function fetchOpenJobs() {
+
             try {
                 // Production logic connecting to Firestore data stream
                 const q = query(collection(db, "jobs"), where("status", "==", "open"));
@@ -87,7 +97,7 @@
                         </div>
                         <div style="display: flex; gap: 10px; justify-content: center;">
                             <a href="/pages/job-details.html?id=${job.id}" class="btn-view" style="text-decoration: none; padding: 8px 15px; background: #e2e8f0; color: #475569; border-radius: 8px; font-weight: 600; flex: 1; text-align: center; font-size: 0.9rem;">View Details</a>
-                            <a href="/pages/apply-job.html?id=${job.id}" class="btn-submit" style="text-decoration: none; padding: 8px 15px; background: #8b5cf6; color: white; border-radius: 8px; font-weight: 600; flex: 1; text-align: center; font-size: 0.9rem;">Apply Now</a>
+                            ${currentUserRole === 'freelancer' ? `<a href="/pages/apply-job.html?id=${job.id}" class="btn-submit" style="text-decoration: none; padding: 8px 15px; background: #8b5cf6; color: white; border-radius: 8px; font-weight: 600; flex: 1; text-align: center; font-size: 0.9rem;">Apply Now</a>` : ''}
                         </div>
                     </div>
                 `;
