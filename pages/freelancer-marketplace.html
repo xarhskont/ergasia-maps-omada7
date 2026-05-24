@@ -47,11 +47,26 @@
         let allOpenJobs = []; 
         let currentUserRole = 'guest';
 
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                currentUserRole = user.role ? user.role.toLowerCase().trim() : 'guest';
+                try {
+                    const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js");
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    if (userDoc.exists()) {
+                        currentUserRole = userDoc.data().role ? userDoc.data().role.toLowerCase().trim() : 'guest';
+                    } else {
+                        currentUserRole = 'guest';
+                    }
+                } catch (err) {
+                    console.error("Error fetching user role:", err);
+                    currentUserRole = 'guest';
+                }
             } else {
                 currentUserRole = 'guest';
+            }
+            // Re-render jobs once we know the user role
+            if (allOpenJobs.length > 0) {
+                renderJobs(allOpenJobs);
             }
         });
 
