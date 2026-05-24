@@ -19,8 +19,7 @@
             <button class="tab-btn" data-status="submitted">Submitted</button>
         </div>
 
-        <div id="jobs-list" class="jobs-tracker-grid">
-            </div>
+        <div id="jobs-list" class="jobs-tracker-grid"></div>
     </main>
 
     <footer id="main-footer"></footer>
@@ -28,7 +27,7 @@
     <script type="module">
         import { auth, db } from '/assets/js/firebase-config.js';
         import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
-        import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import { loadHeader, loadFooter } from '/assets/js/layout.js';
 
         loadHeader();
@@ -37,7 +36,6 @@
         const jobsList = document.getElementById('jobs-list');
         let currentFilter = 'all';
 
-        // ΚΡΙΣΙΜΗ ΔΙΟΡΘΩΣΗ: Περιμένουμε την αρχικοποίηση της σύνδεσης από τη Firebase
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 fetchMyJobs(user);
@@ -52,9 +50,22 @@
                 const querySnapshot = await getDocs(q);
                 
                 const applications = [];
-                querySnapshot.forEach((doc) => {
-                    applications.push({ id: doc.id, ...doc.data() });
-                });
+                for (const appDoc of querySnapshot.docs) {
+                    const appData = appDoc.data();
+                    let jobTitle = `Job ID: ${appData.jobId}`; // Αν δε βρει τίτλο, δείχνει το ID
+                    
+                    // Παίρνουμε τον πραγματικό τίτλο της δουλειάς
+                    try {
+                        const jobRef = await getDoc(doc(db, "jobs", appData.jobId));
+                        if (jobRef.exists()) {
+                            jobTitle = jobRef.data().title;
+                        }
+                    } catch (e) {
+                        console.error("Error fetching job title:", e);
+                    }
+
+                    applications.push({ id: appDoc.id, jobTitle, ...appData });
+                }
 
                 const filtered = currentFilter === 'all' 
                     ? applications 
@@ -75,10 +86,10 @@
             jobsList.innerHTML = apps.map(app => `
                 <div class="tracker-card">
                     <div class="tracker-header">
-                        <strong>Job ID: ${app.jobId}</strong>
+                        <strong style="font-size: 1.1rem; color: var(--primary-color);">${app.jobTitle}</strong>
                         <span class="status-badge ${app.status}">${app.status}</span>
                     </div>
-                    <p>Proposal: ${app.proposal.substring(0, 60)}...</p>
+                    <p style="color: var(--secondary-color); font-size: 0.9rem; margin-bottom: 15px;">Proposal: ${app.proposal.substring(0, 60)}...</p>
                      ${app.status === 'assigned' ? `<a href="/pages/submit-work.html?jobId=${app.jobId}" class="btn-submit-work">Submit Deliverable</a>` : ''}
                 </div>
             `).join('');
@@ -90,7 +101,6 @@
                 e.target.classList.add('active');
                 currentFilter = e.target.dataset.status;
                 
-                // Καλούμε τη συνάρτηση περνώντας τον ενεργό χρήστη
                 if (auth.currentUser) {
                     fetchMyJobs(auth.currentUser);
                 }

@@ -1,4 +1,3 @@
-<!-- submit-work.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,7 +33,7 @@
     <script type="module">
         import { auth, db } from '/assets/js/firebase-config.js';
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
-        import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { doc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import { loadHeader, loadFooter } from '/assets/js/layout.js';
 
         loadHeader();
@@ -48,16 +47,21 @@
             e.preventDefault();
             const file = document.getElementById('file-upload').files[0];
             const notes = document.getElementById('notes').value;
+            const user = auth.currentUser;
             
-            if (!file) return;
+            if (!file || !user) return;
 
             try {
+                const btn = document.querySelector('.btn-submit');
+                btn.disabled = true;
+                btn.innerText = "Uploading File...";
+
                 // 1. Upload file to Firebase Storage
                 const storageRef = ref(storage, `deliverables/${jobId}_${file.name}`);
                 await uploadBytes(storageRef, file);
                 const downloadURL = await getDownloadURL(storageRef);
 
-                // 2. Update job status and add deliverable link to jobs collection
+                // 2. Update job status 
                 await updateDoc(doc(db, "jobs", jobId), {
                     status: 'submitted',
                     deliverableUrl: downloadURL,
@@ -65,10 +69,27 @@
                     submittedAt: new Date()
                 });
 
+                // 3. (ΚΡΙΣΙΜΗ ΔΙΟΡΘΩΣΗ) Update the application status to 'submitted'
+                const appQ = query(collection(db, 'applications'), 
+                    where('jobId', '==', jobId), 
+                    where('freelancerId', '==', user.uid)
+                );
+                const appSnapshot = await getDocs(appQ);
+                
+                if (!appSnapshot.empty) {
+                    const appDocId = appSnapshot.docs[0].id;
+                    await updateDoc(doc(db, 'applications', appDocId), {
+                        status: 'submitted'
+                    });
+                }
+
                 alert("Work submitted successfully! The employer will be notified.");
-                 window.location.href = '/pages/my-jobs.html';
+                window.location.href = '/pages/my-jobs.html';
             } catch (err) {
                 alert("Submission failed: " + err.message);
+                const btn = document.querySelector('.btn-submit');
+                btn.disabled = false;
+                btn.innerText = "Submit Final Work";
             }
         });
     </script>

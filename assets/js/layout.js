@@ -18,12 +18,13 @@ export async function loadHeader() {
         const userInitial = (user.displayName || 'U').charAt(0).toUpperCase();
         let dashboardLink = '';
         let profilePath = '/pages/profile.html';
-        let dashboardPath = '/pages/my-jobs.html'; 
+        let dashboardPath = '/pages/my-jobs.html';
+        let role = null;
         
         try {
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             if (userDoc.exists()) {
-                const role = userDoc.data().role;
+                role = userDoc.data().role;
                 dashboardPath = role === 'employer' ? '/pages/employer-dashboard.html' : '/pages/my-jobs.html';
                 
                 if (role === 'employer') {
@@ -43,10 +44,13 @@ export async function loadHeader() {
         // 1η ΔΙΟΡΘΩΣΗ: Το λογότυπο λειτουργεί πλέον ως Home για τους συνδεδεμένους (πάει στο Dashboard)
         logoHref = dashboardPath;
 
+        // Show Search link to non-employers only
+        const searchLink = role === 'employer' ? '' : '<li><a href="/pages/freelancer-marketplace.html">Search</a></li>';
+
         // 2η ΔΙΟΡΘΩΣΗ: Αφαιρέθηκε το ελαττωματικό "Home" link. Έμειναν μόνο τα απαραίτητα.
         navLinks = `
             ${dashboardLink}
-            <li><a href="/pages/freelancer-marketplace.html">Search</a></li>
+            ${searchLink}
             <li><a href="#" id="logout-btn" style="color: var(--error-color); font-weight: 600;">Logout</a></li>
             <li><a href="${profilePath}" title="Profile" style="display: flex; align-items: center; justify-content: center;">
                 <div style="

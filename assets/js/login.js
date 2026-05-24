@@ -21,7 +21,6 @@ loginForm.addEventListener('submit', async (e) => {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Fetch role from Firestore to determine redirect
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         
         if (userDoc.exists()) {
@@ -29,11 +28,11 @@ loginForm.addEventListener('submit', async (e) => {
             const role = userData.role;
             alert(`Welcome back, ${userData.fullName}!`);
             
-            // Redirect based on role
+            // ΔΙΟΡΘΩΣΗ: Προστέθηκε το αρχικό '/' για να μη σπάει ποτέ η διαδρομή
             if (role === 'employer') {
-                window.location.href = 'pages/employer-dashboard.html'; 
+                window.location.href = '/pages/employer-dashboard.html'; 
             } else {
-                window.location.href = 'pages/freelancer-marketplace.html';
+                window.location.href = '/pages/freelancer-marketplace.html';
             }
 
         } else {

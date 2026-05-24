@@ -47,6 +47,7 @@
         let allOpenJobs = []; 
         let currentUserRole = 'guest';
 
+        // Περιμένουμε ΠΡΩΤΑ να επιβεβαιωθεί ο ρόλος του χρήστη
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 try {
@@ -54,26 +55,17 @@
                     const userDoc = await getDoc(doc(db, "users", user.uid));
                     if (userDoc.exists()) {
                         currentUserRole = userDoc.data().role ? userDoc.data().role.toLowerCase().trim() : 'guest';
-                    } else {
-                        currentUserRole = 'guest';
                     }
                 } catch (err) {
                     console.error("Error fetching user role:", err);
-                    currentUserRole = 'guest';
                 }
-            } else {
-                currentUserRole = 'guest';
             }
-            // Re-render jobs once we know the user role
-            if (allOpenJobs.length > 0) {
-                renderJobs(allOpenJobs);
-            }
+            // ΚΑΙ ΜΕΤΑ κατεβάζουμε τις εργασίες (έτσι το Apply Now θα εμφανιστεί σωστά)
+            fetchOpenJobs();
         });
 
         async function fetchOpenJobs() {
-
             try {
-                // Production logic connecting to Firestore data stream
                 const q = query(collection(db, "jobs"), where("status", "==", "open"));
                 const querySnapshot = await getDocs(q);
                 
@@ -83,7 +75,6 @@
                 });
 
                 renderJobs(allOpenJobs);
-                return allOpenJobs;
             } catch (err) {
                 console.error("Error fetching jobs:", err);
                 jobsGrid.innerHTML = `<p class="error-msg">Failed to load jobs. Please try again later.</p>`;
@@ -97,7 +88,6 @@
             }
 
             jobsGrid.innerHTML = jobsToRender.map(job => {
-                // Format Firestore server timestamps safely
                 const deadlineDate = job.deadline && typeof job.deadline.toDate === 'function' 
                     ? job.deadline.toDate().toLocaleDateString() 
                     : job.deadline;
@@ -119,7 +109,6 @@
             }).join('');
         }
 
-        // Live filtration loop for filtering the returned collection
         document.getElementById('filter-btn').addEventListener('click', () => {
             const searchTerm = searchInput.value.toLowerCase().trim();
             const budgetFilter = budgetSelect.value;
@@ -144,8 +133,6 @@
 
             renderJobs(filtered);
         });
-
-        fetchOpenJobs();
     </script>
 </body>
 </html>
