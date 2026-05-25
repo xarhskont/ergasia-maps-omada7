@@ -53,18 +53,37 @@
                 for (const appDoc of querySnapshot.docs) {
                     const appData = appDoc.data();
                     let jobTitle = `Job ID: ${appData.jobId}`; // Αν δε βρει τίτλο, δείχνει το ID
+                    let jobBudget = 'N/A';
+                    let jobDeadline = 'N/A';
+                    let jobDescription = 'No description available.';
                     
                     // Παίρνουμε τον πραγματικό τίτλο της δουλειάς
                     try {
                         const jobRef = await getDoc(doc(db, "jobs", appData.jobId));
                         if (jobRef.exists()) {
-                            jobTitle = jobRef.data().title;
+                            const jobData = jobRef.data();
+                            jobTitle = jobData.title || jobTitle;
+                            jobBudget = jobData.budget ? `$${jobData.budget}` : 'N/A';
+                            jobDescription = jobData.description || jobDescription;
+                            
+                            if (jobData.deadline) {
+                                jobDeadline = typeof jobData.deadline.toDate === 'function' 
+                                    ? jobData.deadline.toDate().toLocaleDateString() 
+                                    : jobData.deadline;
+                            }
                         }
                     } catch (e) {
                         console.error("Error fetching job title:", e);
                     }
 
-                    applications.push({ id: appDoc.id, jobTitle, ...appData });
+                    applications.push({ 
+                        id: appDoc.id, 
+                        jobTitle, 
+                        jobBudget, 
+                        jobDeadline, 
+                        jobDescription, 
+                        ...appData 
+                    });
                 }
 
                 const filtered = currentFilter === 'all' 
@@ -85,12 +104,25 @@
 
             jobsList.innerHTML = apps.map(app => `
                 <div class="tracker-card">
-                    <div class="tracker-header">
+                    <div class="tracker-header" style="margin-bottom: 10px;">
                         <strong style="font-size: 1.1rem; color: var(--primary-color);">${app.jobTitle}</strong>
                         <span class="status-badge ${app.status}">${app.status}</span>
                     </div>
-                    <p style="color: var(--secondary-color); font-size: 0.9rem; margin-bottom: 15px;">Proposal: ${app.proposal.substring(0, 60)}...</p>
-                     ${app.status === 'assigned' ? `<a href="/pages/submit-work.html?jobId=${app.jobId}" class="btn-submit-work">Submit Deliverable</a>` : ''}
+                    
+                    <div style="display: flex; gap: 15px; margin-bottom: 12px; font-size: 0.85rem; color: #64748b; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                        <span><strong>Budget:</strong> ${app.jobBudget}</span>
+                        <span><strong>Due:</strong> ${app.jobDeadline}</span>
+                    </div>
+
+                    <p style="color: #475569; font-size: 0.9rem; margin-bottom: 10px;">
+                        <strong>Job Details:</strong> ${app.jobDescription.substring(0, 80)}...
+                    </p>
+
+                    <p style="color: var(--secondary-color); font-size: 0.9rem; margin-bottom: 15px; border-left: 3px solid #cbd5e1; padding-left: 10px;">
+                        <strong>Your Proposal:</strong> ${app.proposal.substring(0, 60)}...
+                    </p>
+                    
+                     ${app.status === 'assigned' ? `<a href="/pages/submit-work?jobId=${app.jobId}" class="btn-submit-work" style="display: block; text-align: center; margin-top: 10px;">Submit Deliverable</a>` : ''}
                 </div>
             `).join('');
         }

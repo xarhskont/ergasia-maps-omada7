@@ -59,6 +59,13 @@
                 <button type="submit" class="btn-save">Save Changes</button>
             </form>
 
+            <div style="margin-top: 30px; text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                <a href="#" id="logout-btn" title="Logout" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; color: var(--error-color); font-weight: 600; padding: 8px 16px; border: 2px solid var(--error-color); border-radius: 20px; transition: background 0.2s;">
+                    <img src="https://cdn-icons-png.freepik.com/512/15080/15080136.png" alt="Logout" style="width: 18px; height: 18px; opacity: 0.8;">
+                    <span>Logout</span>
+                </a>
+            </div>
+
         </div>
 
         <div class="stats-container">
@@ -180,6 +187,20 @@
                 alert("Error updating profile: " + err.message);
             }
         });
+
+        // Handle logout functionality
+        document.getElementById('logout-btn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                await auth.signOut();
+                alert("Logged out successfully!");
+                window.location.href = "/index.html";
+            } catch (err) {
+                alert("Error during logout: " + err.message);
+            }
+        });
     </script>
 </body>
 </html>
+
+```

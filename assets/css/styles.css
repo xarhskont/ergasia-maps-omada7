@@ -378,14 +378,18 @@ body {
 
 .btn-view {
     text-align: center;
-    background-color: var(--primary-color);
-    color: white;
+    background-color: #e2e8f0;
+    color: #475569;
     text-decoration: none;
     padding: 0.8rem;
     border-radius: 6px;
     font-weight: 600;
-    display: block;
     transition: background-color 0.2s;
+    font-size: 1rem;
+    margin-top: 1rem; 
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 .btn-view:hover { background-color: var(--primary-hover); }
 

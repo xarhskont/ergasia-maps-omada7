@@ -51,7 +51,6 @@ export async function loadHeader() {
         navLinks = `
             ${dashboardLink}
             ${searchLink}
-            <li><a href="#" id="logout-btn" style="color: var(--error-color); font-weight: 600;">Logout</a></li>
             <li><a href="${profilePath}" title="Profile" style="display: flex; align-items: center; justify-content: center;">
                 <div style="
                     width: 32px; 
@@ -84,22 +83,6 @@ export async function loadHeader() {
             </ul>
         </nav>
     `;
-
-    if (user) {
-        const logoutBtn = document.getElementById('logout-btn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                try {
-                    await signOut(auth);
-                    window.location.href = '/index.html';
-                } catch (error) {
-                    console.error('Logout error:', error);
-                    alert('Error logging out. Please try again.');
-                }
-            });
-        }
-    }
 }
 
 export function loadFooter() {
