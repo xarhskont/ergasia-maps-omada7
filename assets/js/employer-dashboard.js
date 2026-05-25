@@ -67,7 +67,7 @@ async function fetchJobs(statusFilter = 'all') {
                     Budget: <span style="color: var(--success-color); font-weight: bold;">$${job.budget}</span> | Deadline: ${job.deadline}
                 </div>
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    ${job.status === 'open' ? `<a href="/pages/job-applications.html?id=${id}" class="btn-submit-work" style="flex: 1; text-align: center; padding: 12px 0; font-weight: 600;">View Applications</a>` : ''}
+                    ${job.status === 'open' ? `<a href="/pages/job-applications?id=${id}" class="btn-submit-work" style="flex: 1; text-align: center; padding: 12px 0; font-weight: 600;">View Applications</a>` : ''}
                     <button class="btn-delete" id="del-${id}" style="background: var(--error-color); color: white; border: none; border-radius: 6px; cursor: pointer; padding: 12px 15px; font-weight: 600;">Delete</button>
                 </div>
             `;
