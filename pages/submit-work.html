@@ -32,14 +32,16 @@
 
     <script type="module">
         import { auth, db } from '/assets/js/firebase-config.js';
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js";
         import { doc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         import { loadHeader, loadFooter } from '/assets/js/layout.js';
 
         loadHeader();
         loadFooter();
 
-        const storage = getStorage();
+        // Cloudinary Configuration
+        const CLOUDINARY_CLOUD_NAME = 'datdzbnlj'; 
+        const CLOUDINARY_UPLOAD_PRESET = 'ml_default';
+
         const urlParams = new URLSearchParams(window.location.search);
         const jobId = urlParams.get('jobId');
 
@@ -56,10 +58,23 @@
                 btn.disabled = true;
                 btn.innerText = "Uploading File...";
 
-                // 1. Upload file to Firebase Storage
-                const storageRef = ref(storage, `deliverables/${jobId}_${file.name}`);
-                await uploadBytes(storageRef, file);
-                const downloadURL = await getDownloadURL(storageRef);
+                // 1. Upload file to Cloudinary using Unsigned Upload
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+                const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
+                const response = await fetch(cloudinaryUrl, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Cloudinary upload failed');
+                }
+
+                const data = await response.json();
+                const downloadURL = data.secure_url;
 
                 // 2. Update job status 
                 await updateDoc(doc(db, "jobs", jobId), {
@@ -69,7 +84,7 @@
                     submittedAt: new Date()
                 });
 
-                // 3. (ΚΡΙΣΙΜΗ ΔΙΟΡΘΩΣΗ) Update the application status to 'submitted'
+                // 3. Update the application status to 'submitted'
                 const appQ = query(collection(db, 'applications'), 
                     where('jobId', '==', jobId), 
                     where('freelancerId', '==', user.uid)

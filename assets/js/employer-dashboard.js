@@ -58,6 +58,17 @@ async function fetchJobs(statusFilter = 'all') {
             
             const card = document.createElement('div');
             card.className = 'tracker-card';
+            
+            let extraContent = '';
+            if (job.status === 'submitted') {
+                extraContent = `
+                    <div style="background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid var(--success-color);">
+                        <p style="font-size: 0.85rem; margin: 0 0 5px 0;"><strong>Submission Notes:</strong> ${job.submissionNotes || 'No notes provided.'}</p>
+                        <a href="${job.deliverableUrl}" target="_blank" class="btn-submit-work" style="display: inline-block; padding: 5px 10px; font-size: 0.8rem; text-align: center;">View Deliverable</a>
+                    </div>
+                `;
+            }
+
             card.innerHTML = `
                 <div class="tracker-header">
                     <h3>${job.title}</h3>
@@ -66,25 +77,27 @@ async function fetchJobs(statusFilter = 'all') {
                 <div style="color: var(--secondary-color); font-size: 0.9rem; margin-bottom: 1rem;">
                     Budget: <span style="color: var(--success-color); font-weight: bold;">$${job.budget}</span> | Deadline: ${job.deadline}
                 </div>
+                ${extraContent}
                 <div style="display: flex; gap: 10px; align-items: center;">
                     ${job.status === 'open' ? `<a href="/pages/job-applications?id=${id}" class="btn-submit-work" style="flex: 1; text-align: center; padding: 12px 0; font-weight: 600;">View Applications</a>` : ''}
-                    <button class="btn-delete" id="del-${id}" style="background: var(--error-color); color: white; border: none; border-radius: 6px; cursor: pointer; padding: 12px 15px; font-weight: 600;">Delete</button>
+                    ${job.status === 'open' ? `<button class="btn-delete" id="del-${id}" style="background: var(--error-color); color: white; border: none; border-radius: 6px; cursor: pointer; padding: 12px 15px; font-weight: 600;">Delete</button>` : ''}
                 </div>
             `;
             jobsGrid.appendChild(card);
 
-            // Ασφαλής λειτουργία Delete
-            document.getElementById(`del-${id}`).addEventListener('click', async () => {
-                if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
-                    try {
-                        await deleteDoc(doc(db, 'jobs', id));
-                        alert('Job deleted successfully!');
-                        fetchJobs(statusFilter); // Ανανεώνει τη λίστα αυτόματα
-                    } catch (err) {
-                        alert('Error deleting job: ' + err.message);
+            if (job.status === 'open') {
+                document.getElementById(`del-${id}`).addEventListener('click', async () => {
+                    if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+                        try {
+                            await deleteDoc(doc(db, 'jobs', id));
+                            alert('Job deleted successfully!');
+                            fetchJobs(statusFilter);
+                        } catch (err) {
+                            alert('Error deleting job: ' + err.message);
+                        }
                     }
-                }
-            });
+                });
+            }
         });
     } catch (error) {
         console.error('Error fetching jobs:', error);
