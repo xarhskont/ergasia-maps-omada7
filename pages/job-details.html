@@ -64,11 +64,11 @@
     <footer id="main-footer"></footer>
 
     <script type="module">
-        import { auth, db } from '/assets/js/firebase-config.js';
-        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
-        import { submitRating } from '/assets/js/rating.js';
-        import { loadHeader, loadFooter } from '/assets/js/layout.js';
+import { auth, db } from '/assets/js/firebase-config.js';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+import { submitRating } from '/assets/js/rating.js';
+import { loadHeader, loadFooter } from '/assets/js/layout.js';
         
         loadHeader();
         loadFooter();
@@ -76,13 +76,37 @@
         const params = new URLSearchParams(window.location.search);
         const jobId = params.get('id');
 
+        async function checkRatingAuthorization(user, job) {
+            if (!user || !job) return false;
+            
+            const status = job.status ? job.status.toLowerCase().trim() : 'open';
+            const isEmployer = (job.employerId === user.uid);
+            const isFreelancer = (job.assignedFreelancerId === user.uid);
+            const canRate = (status === 'submitted' || status === 'completed') && (isEmployer || isFreelancer);
+
+            if (!canRate) return false;
+
+            try {
+                const reviewsRef = collection(db, "reviews");
+                const q = query(reviewsRef, where("jobId", "==", jobId), where("reviewerId", "==", user.uid));
+                const querySnapshot = await getDocs(q);
+                return querySnapshot.empty; 
+            } catch (error) {
+                console.error("Error checking rating status:", error);
+                return false;
+            }
+        }
+
         async function initPage() {
             if (!jobId) {
                 alert("No job ID provided.");
                 window.location.href = '/pages/freelancer-marketplace.html';
                 return;
             }
-
+    
+            const params = new URLSearchParams(window.location.search);
+            const shouldRate = params.get('rate') === 'true';
+    
             try {
                 const jobDoc = await getDoc(doc(db, "jobs", jobId));
                 if (!jobDoc.exists()) {
@@ -90,11 +114,16 @@
                     window.location.href = '/pages/freelancer-marketplace.html';
                     return;
                 }
-
+    
                 const jobData = jobDoc.data();
                 
-                // 1. Display Job Info
-                document.getElementById('job-info-section').style.display = 'block';
+                // If shouldRate is true, hide the info section and only show the rating form
+                if (shouldRate) {
+                    document.getElementById('job-info-section').style.display = 'none';
+                } else {
+                    document.getElementById('job-info-section').style.display = 'block';
+                }
+
                 document.getElementById('job-title').innerText = jobData.title || 'Untitled Job';
                 document.getElementById('job-budget').innerText = jobData.budget ? `$${jobData.budget}` : 'N/A';
                 document.getElementById('job-description').innerText = jobData.description || 'No description provided.';
@@ -104,50 +133,110 @@
                     ? jobData.deadline.toDate().toLocaleDateString() 
                     : jobData.deadline;
                 document.getElementById('job-deadline').innerText = deadline || 'N/A';
-
+    
                 // 2. Handle Role-Based Actions
-                onAuthStateChanged(auth, (user) => {
+                onAuthStateChanged(auth, async (user) => {
                     if (user) {
-                        renderActions(user, jobData);
+                        await renderActions(user, jobData);
+                        
+                                    if (shouldRate) {
+                                        setTimeout(async () => {
+                                            const ratingSection = document.getElementById('rating-section');
+                                            if (ratingSection) {
+                                                const authorized = await checkRatingAuthorization(user, jobData);
+                                                if (authorized) {
+                                                    ratingSection.style.display = 'block';
+                                                    ratingSection.scrollIntoView({ behavior: 'smooth' });
+                                                } else {
+                                                    console.log(`User ${user.uid} not authorized or already rated.`);
+                                                }
+                                            }
+                                        }, 200);
+                                    }
                     } else {
-                        // Not logged in: show only back button
                         renderActions({ role: 'guest', uid: null }, jobData);
                     }
                 });
-
+    
             } catch (error) {
                 console.error("Initialization Error:", error);
                 alert("An error occurred while loading the job details.");
             }
         }
 
-        function renderActions(user, job) {
+        async function renderActions(user, job) {
             const container = document.getElementById('action-container');
             container.innerHTML = '';
-
+    
             const role = user.role ? user.role.toLowerCase().trim() : 'guest';
             const status = job.status ? job.status.toLowerCase().trim() : 'open';
             
-            console.log(`DEBUG: Detected Role: "${role}" | Detected Status: "${status}"`);
-
+            console.log("--- Action Render Debug ---");
+            console.log(`User UID: ${user.uid}`);
+            console.log(`User Role: ${role}`);
+            console.log(`Job Status: ${status}`);
+            console.log(`Job EmployerID: ${job.employerId}`);
+            console.log(`Job FreelancerID: ${job.assignedFreelancerId}`);
+    
             // Back Button (Always present)
             const backBtn = document.createElement('a');
-            backBtn.href = '/pages/freelancer-marketplace.html';
             backBtn.href = '/pages/freelancer-marketplace.html';
             backBtn.className = 'btn-view';
             backBtn.style.cssText = 'text-decoration:none; padding:12px 24px; background:#8b5cf6; color:white; border-radius:10px; font-weight:600; flex:1; text-align:center; max-width:200px;';
             backBtn.innerText = 'Go Back';
             container.appendChild(backBtn);
-
-            if (status === 'completed') {
-                const isEmployer = role === 'employer' && job.employerId === user.uid;
-                const isFreelancer = role === 'freelancer' && job.freelancerId === user.uid;
-
+    
+            if ((status === 'completed' || status === 'submitted')) {
+                const isEmployer = (job.employerId === user.uid);
+                const isFreelancer = (job.assignedFreelancerId === user.uid);
+    
                 if (isEmployer || isFreelancer) {
-                    document.getElementById('rating-section').style.display = 'block';
-                    const type = isEmployer ? 'employer_to_freelancer' : 'freelancer_to_employer';
-                    const revieweeId = isEmployer ? job.freelancerId : job.employerId;
-                    attachRatingEvent(revieweeId, type);
+                    const authorized = await checkRatingAuthorization(user, job);
+                    
+                    if (!authorized) {
+                        console.log("User already rated or unauthorized. Button hidden.");
+                        return;
+                    }
+
+                    // Ensure there is someone to rate
+                    const revieweeId = isEmployer ? job.assignedFreelancerId : job.employerId;
+                    
+                    if (!revieweeId) {
+                        console.warn("Rating target ID is missing.");
+                    } else {
+                        // Rate Job Button
+                        const rateBtn = document.createElement('button');
+                        rateBtn.className = 'btn-submit';
+                        rateBtn.style.cssText = 'padding:12px 24px; background:#8b5cf6; color:white; border:none; border-radius:10px; font-weight:600; flex:1; text-align:center; max-width:200px; cursor:pointer;';
+                        rateBtn.innerText = 'Rate Job';
+                        rateBtn.onclick = () => {
+                            document.getElementById('rating-section').style.display = 'block';
+                            document.getElementById('rating-section').scrollIntoView({ behavior: 'smooth' });
+                        };
+                        container.appendChild(rateBtn);
+
+                        if (status === 'submitted' && isEmployer) {
+                            const completeBtn = document.createElement('button');
+                            completeBtn.className = 'btn-submit';
+                            completeBtn.style.cssText = 'padding:12px 24px; background:#22c55e; color:white; border:none; border-radius:10px; font-weight:600; flex:1; text-align:center; max-width:200px; cursor:pointer;';
+                            completeBtn.innerText = 'Mark as Completed';
+                            completeBtn.onclick = async () => {
+                                if (confirm("Are you sure you want to mark this job as completed?")) {
+                                    try {
+                                        await updateDoc(doc(db, "jobs", jobId), { status: 'completed' });
+                                        alert("Job marked as completed!");
+                                        location.reload();
+                                    } catch (err) {
+                                        alert("Error completing job: " + err.message);
+                                    }
+                                };
+                            };
+                            container.appendChild(completeBtn);
+                        }
+                        
+                        const type = isEmployer ? 'employer_to_freelancer' : 'freelancer_to_employer';
+                        attachRatingEvent(revieweeId, type);
+                    }
                 }
             } else if (status === 'open') {
                 if (role === 'freelancer') {
@@ -192,7 +281,7 @@
                 try {
                     await submitRating(jobId, revieweeId, parseInt(rating), comment, type);
                     alert("Rating submitted successfully!");
-                    document.getElementById('rating-section').style.display = 'none';
+                    window.location.href = '/pages/my-jobs.html';
                 } catch (err) {
                     alert("Error submitting rating: " + err.message);
                 }

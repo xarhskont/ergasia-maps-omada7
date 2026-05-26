@@ -16,6 +16,15 @@ export async function submitRating(jobId, revieweeId, rating, comment, type) {
 
     try {
         const reviewsRef = collection(db, 'reviews');
+        
+        // Check for existing review by this user for this job
+        const q = query(reviewsRef, where("jobId", "==", jobId), where("reviewerId", "==", user.uid));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+            throw new Error("You have already submitted a rating for this job.");
+        }
+
         await addDoc(reviewsRef, {
             jobId: jobId,
             reviewerId: user.uid,

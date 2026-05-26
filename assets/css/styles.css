@@ -171,13 +171,12 @@ body {
     background-color: var(--primary-hover);
 }
 
-/* Star Rating Framework */
 .star-rating {
     display: flex;
     flex-direction: row-reverse;
     justify-content: center;
     gap: 0.5rem;
-    font-size: 2rem;
+    font-size: 2.5rem;
 }
 
 .star-rating input { display: none; }
@@ -185,7 +184,11 @@ body {
 .star-rating label {
     color: #cbd5e1;
     cursor: pointer;
-    transition: color 0.2s;
+    transition: color 0.2s, transform 0.1s;
+}
+
+.star-rating label:hover {
+    transform: scale(1.1);
 }
 
 .star-rating input:checked ~ label,
