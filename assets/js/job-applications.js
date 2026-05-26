@@ -40,6 +40,12 @@ async function fetchApplications() {
             // For each application, we need to fetch the freelancer's user details
             for (const appDoc of querySnapshot.docs) {
                 const appData = appDoc.data();
+
+                // Skip rendering if the application is already rejected
+                if (appData.status === 'rejected') {
+                    continue; 
+                }
+                
                 const freelancerId = appData.freelancerId;
                 
                 // Fetch freelancer profile
@@ -56,8 +62,9 @@ async function fetchApplications() {
                         <span class="deadline">Est. Time: ${appData.estimatedTime || 'N/A'} days</span>
                     </div>
                     <div style="display: flex; gap: 10px; margin-top: 15px;">
-                        <a href="freelancer-profile.html?id=${freelancerId}" target="_blank" class="btn-view" style="flex: 1; text-decoration: none; text-align: center; padding: 8px; background: #e2e8f0; color: #475569; border-radius: 8px; font-weight: 600; font-size: 0.9rem;">View Profile</a>
-                        <button class="btn-submit" id="hire-${freelancerId}" style="flex: 1; border: none; cursor: pointer; padding: 8px; background: #8b5cf6; color: white; border-radius: 8px; font-weight: 600; font-size: 0.9rem;">Hire</button>
+                        <a href="freelancer-profile.html?id=${freelancerId}" target="_blank" class="btn-view" style="flex: 1; display: flex; justify-content: center; align-items: center; box-sizing: border-box; text-decoration: none; padding: 12px; background: #e2e8f0; color: #475569; border-radius: 8px; font-weight: 600; font-size: 1rem;">View Profile</a>
+                        <button class="btn-submit" id="hire-${freelancerId}" style="flex: 1; display: flex; justify-content: center; align-items: center; box-sizing: border-box; border: none; cursor: pointer; padding: 12px; background: #8b5cf6; color: white; border-radius: 8px; font-weight: 600; font-size: 1rem;">Hire</button>
+                        <button class="btn-submit" id="reject-${freelancerId}" style="flex: 1; display: flex; justify-content: center; align-items: center; box-sizing: border-box; border: none; cursor: pointer; padding: 12px; background: #ef4444; color: white; border-radius: 8px; font-weight: 600; font-size: 1rem;">Reject</button>
                     </div>
                 `;
                 appsGrid.appendChild(card);
@@ -91,6 +98,34 @@ async function fetchApplications() {
                         } catch (error) {
                             console.error("Hire Error:", error);
                             alert("Error during hiring process: " + error.message);
+                        }
+                    }
+                });
+
+                // Reject logic added here
+                document.getElementById(`reject-${freelancerId}`).addEventListener('click', async () => {
+                    if (confirm(`Are you sure you want to reject ${user.fullName}'s application?`)) {
+                        try {
+                            // Update the specific Application document to 'rejected'
+                            const appQ = query(collection(db, 'applications'), 
+                                where('jobId', '==', jobId), 
+                                where('freelancerId', '==', freelancerId)
+                            );
+                            const appSnapshot = await getDocs(appQ);
+                            
+                            if (!appSnapshot.empty) {
+                                const appDocId = appSnapshot.docs[0].id;
+                                await updateDoc(doc(db, 'applications', appDocId), {
+                                    status: 'rejected'
+                                });
+                            }
+
+                            alert('Application rejected.');
+                            // Reload the page to reflect the new state (or to trigger UI updates based on your dashboard logic)
+                            window.location.reload();
+                        } catch (error) {
+                            console.error("Reject Error:", error);
+                            alert("Error during rejection process: " + error.message);
                         }
                     }
                 });
