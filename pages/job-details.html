@@ -76,26 +76,33 @@ import { loadHeader, loadFooter } from '/assets/js/layout.js';
         const params = new URLSearchParams(window.location.search);
         const jobId = params.get('id');
 
-        async function checkRatingAuthorization(user, job) {
-            if (!user || !job) return false;
+    async function checkRatingAuthorization(user, job) {
+        if (!user || !job) return false;
+        
+        const status = job.status ? job.status.toLowerCase().trim() : 'open';
+        const isEmployer = (job.employerId === user.uid);
+        const isFreelancer = (job.assignedFreelancerId === user.uid);
+        
+        // 1. Check if the job is in a state that can be reviewed (submitted or completed)
+        const jobIsFinished = (status === 'submitted' || status === 'completed');
+        if (!jobIsFinished) return false;
+
+        // 2. Check if the user is the one eligible to rate
+        if (!(isEmployer || isFreelancer)) return false;
+
+        try {
+            // 3. Check if the user has already submitted a review for this jobId
+            const reviewsRef = collection(db, "reviews");
+            const q = query(reviewsRef, where("jobId", "==", jobId), where("reviewerId", "==", user.uid));
+            const querySnapshot = await getDocs(q);
             
-            const status = job.status ? job.status.toLowerCase().trim() : 'open';
-            const isEmployer = (job.employerId === user.uid);
-            const isFreelancer = (job.assignedFreelancerId === user.uid);
-            const canRate = (status === 'submitted' || status === 'completed') && (isEmployer || isFreelancer);
-
-            if (!canRate) return false;
-
-            try {
-                const reviewsRef = collection(db, "reviews");
-                const q = query(reviewsRef, where("jobId", "==", jobId), where("reviewerId", "==", user.uid));
-                const querySnapshot = await getDocs(q);
-                return querySnapshot.empty; 
-            } catch (error) {
-                console.error("Error checking rating status:", error);
-                return false;
-            }
+            // Authorized only if no existing review is found
+            return querySnapshot.empty; 
+        } catch (error) {
+            console.error("Error checking rating status:", error);
+            return false;
         }
+    }
 
         async function initPage() {
             if (!jobId) {
