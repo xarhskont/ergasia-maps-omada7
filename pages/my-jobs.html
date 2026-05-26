@@ -36,6 +36,19 @@
         const jobsList = document.getElementById('jobs-list');
         let currentFilter = 'all';
 
+        async function checkRatingAuthorization(user, jobId) {
+            if (!user || !jobId) return false;
+            try {
+                const reviewsRef = collection(db, "reviews");
+                const q = query(reviewsRef, where("jobId", "==", jobId), where("reviewerId", "==", user.uid));
+                const querySnapshot = await getDocs(q);
+                return querySnapshot.empty;
+            } catch (error) {
+                console.error("Error checking rating status:", error);
+                return false;
+            }
+        }
+
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 fetchMyJobs(user);
@@ -90,43 +103,52 @@
                     ? applications 
                     : applications.filter(app => app.status === currentFilter);
 
-                renderJobs(filtered);
+                await renderJobs(filtered, user);
             } catch (err) {
                 console.error("Error fetching applications:", err);
             }
         }
 
-        function renderJobs(apps) {
-            if (apps.length === 0) {
-                jobsList.innerHTML = `<p class="empty-msg">No jobs found for this category.</p>`;
-                return;
-            }
+        async function renderJobs(apps, user) {
+                    if (apps.length === 0) {
+                        jobsList.innerHTML = `<p class="empty-msg">No jobs found for this category.</p>`;
+                        return;
+                    }
 
-            jobsList.innerHTML = apps.map(app => `
-                <div class="tracker-card">
-                    <div class="tracker-header" style="margin-bottom: 10px;">
-                        <strong style="font-size: 1.1rem; color: var(--primary-color);">${app.jobTitle}</strong>
-                        <span class="status-badge ${app.status}">${app.status}</span>
-                    </div>
-                    
-                    <div style="display: flex; gap: 15px; margin-bottom: 12px; font-size: 0.85rem; color: #64748b; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
-                        <span><strong>Budget:</strong> ${app.jobBudget}</span>
-                        <span><strong>Due:</strong> ${app.jobDeadline}</span>
-                    </div>
+                    let html = '';
+                    for (const app of apps) {
+                        const canRate = (app.status === 'submitted' || app.status === 'completed') 
+                            ? await checkRatingAuthorization(user, app.jobId) 
+                            : false;
 
-                    <p style="color: #475569; font-size: 0.9rem; margin-bottom: 10px;">
-                        <strong>Job Details:</strong> ${app.jobDescription.substring(0, 80)}...
-                    </p>
+                        html += `
+                            <div class="tracker-card">
+                                <div class="tracker-header" style="margin-bottom: 10px;">
+                                    <strong style="font-size: 1.1rem; color: var(--primary-color);">${app.jobTitle}</strong>
+                                    <span class="status-badge ${app.status}">${app.status}</span>
+                                </div>
+                                
+                                <div style="display: flex; gap: 15px; margin-bottom: 12px; font-size: 0.85rem; color: #64748b; background: #f8fafc; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                                    <span><strong>Budget:</strong> ${app.jobBudget}</span>
+                                    <span><strong>Due:</strong> ${app.jobDeadline}</span>
+                                </div>
 
-                     <p style="color: var(--secondary-color); font-size: 0.9rem; margin-bottom: 15px; border-left: 3px solid #cbd5e1; padding-left: 10px;">
-                         <strong>Your Proposal:</strong> ${app.proposal.substring(0, 60)}...
-                     </p>
-                     
-                      ${app.status === 'assigned' ? `<a href="/pages/submit-work.html?jobId=${app.jobId}" class="btn-submit-work" style="display: block; text-align: center; margin-top: 10px;">Submit Deliverable</a>` : ''}
-                      ${(app.status === 'submitted' || app.status === 'completed') ? `<a href="/pages/job-details.html?id=${app.jobId}&rate=true" class="btn-submit-work" style="display: block; text-align: center; margin-top: 10px; background-color: #8b5cf6;">Rate Job</a>` : ''}
-                   </div>
-            `).join('');
-        }
+                                <p style="color: #475569; font-size: 0.9rem; margin-bottom: 10px;">
+                                    <strong>Job Details:</strong> ${app.jobDescription.substring(0, 80)}...
+                                </p>
+
+                                 <p style="color: var(--secondary-color); font-size: 0.9rem; margin-bottom: 15px; border-left: 3px solid #cbd5e1; padding-left: 10px;">
+                                     <strong>Your Proposal:</strong> ${app.proposal.substring(0, 60)}...
+                                 </p>
+                                 
+                                  ${app.status === 'assigned' ? `<a href="/pages/submit-work.html?jobId=${app.jobId}" class="btn-submit-work" style="display: block; text-align: center; margin-top: 10px;">Submit Deliverable</a>` : ''}
+                                  ${canRate ? `<a href="/pages/job-details.html?id=${app.jobId}&rate=true" class="btn-submit-work" style="display: block; text-align: center; margin-top: 10px; background-color: #8b5cf6;">Rate Job</a>` : ''}
+                            </div>
+                        `;
+                    }
+                    jobsList.innerHTML = html;
+                }
+
 
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
