@@ -1,50 +1,82 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employer Profile | Job>inder</title>
-    <link rel="stylesheet" href="/assets/css/styles.css">
-</head>
-<body>
-    <header id="main-header"></header>
-    
-    <main class="profile-container">
-        <div class="profile-card">
-            <h1>My Profile</h1>
-            <form id="profile-form">
-                <div class="form-group">
-                    <label for="display-name">Full Name / Company Name</label>
-                    <input type="text" id="display-name" name="displayName" required>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Employer Profile | Job>inder</title>
+        <link rel="stylesheet" href="/assets/css/styles.css" />
+    </head>
+    <body>
+        <header id="main-header"></header>
+
+        <main class="profile-container">
+            <div class="profile-card">
+                <h1>My Profile</h1>
+                <form id="profile-form">
+                    <div class="form-group">
+                        <label for="display-name">Full Name / Company Name</label>
+                        <input type="text" id="display-name" name="displayName" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="bio">Company Description</label>
+                        <textarea
+                            id="bio"
+                            name="bio"
+                            rows="4"
+                            placeholder="Tell us about your company..."
+                        ></textarea>
+                    </div>
+                    <button type="submit" class="btn-save">Save Changes</button>
+                </form>
+
+                <div
+                    style="
+                        margin-top: 30px;
+                        text-align: center;
+                        padding-top: 20px;
+                        border-top: 1px solid #e2e8f0;
+                    "
+                >
+                    <a
+                        href="#"
+                        id="logout-btn"
+                        title="Logout"
+                        style="
+                            display: inline-flex;
+                            align-items: center;
+                            justify-content: center;
+                            gap: 8px;
+                            text-decoration: none;
+                            color: var(--error-color);
+                            font-weight: 600;
+                            padding: 8px 16px;
+                            border: 2px solid var(--error-color);
+                            border-radius: 20px;
+                            transition: background 0.2s;
+                        "
+                    >
+                        <img
+                            src="https://cdn-icons-png.freepik.com/512/15080/15080136.png"
+                            alt="Logout"
+                            style="width: 18px; height: 18px; opacity: 0.8"
+                        />
+                        <span>Logout</span>
+                    </a>
                 </div>
-                <div class="form-group">
-                    <label for="bio">Company Description</label>
-                    <textarea id="bio" name="bio" rows="4" placeholder="Tell us about your company..."></textarea>
+            </div>
+
+            <div class="stats-container">
+                <h3>Reputation</h3>
+                <div id="rating-summary">
+                    <span id="avg-rating">0.0</span> ★
+                    <span id="total-reviews">(0 reviews)</span>
                 </div>
-                <button type="submit" class="btn-save">Save Changes</button>
-            </form>
-
-            <div style="margin-top: 30px; text-align: center; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-                <a href="#" id="logout-btn" title="Logout" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; color: var(--error-color); font-weight: 600; padding: 8px 16px; border: 2px solid var(--error-color); border-radius: 20px; transition: background 0.2s;">
-                    <img src="https://cdn-icons-png.freepik.com/512/15080/15080136.png" alt="Logout" style="width: 18px; height: 18px; opacity: 0.8;">
-                    <span>Logout</span>
-                </a>
+                <div id="reviews-list"></div>
             </div>
-        </div>
+        </main>
 
-        <div class="stats-container">
-            <h3>Reputation</h3>
-            <div id="rating-summary">
-                <span id="avg-rating">0.0</span> ★ 
-                <span id="total-reviews">(0 reviews)</span>
-            </div>
-            <div id="reviews-list">
-            </div>
-        </div>
-    </main>
+        <footer id="main-footer"></footer>
 
-    <footer id="main-footer"></footer>
-
-    <script type="module" src="/assets/js/employer-profile.js"></script>
-</body>
+        <script type="module" src="/assets/js/employer-profile.js"></script>
+    </body>
 </html>

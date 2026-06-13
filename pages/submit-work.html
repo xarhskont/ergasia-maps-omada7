@@ -1,112 +1,124 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Submit Deliverable | FreelanceHub</title>
-    <link rel="stylesheet" href="/assets/css/styles.css">
-</head>
-<body>
-    <header id="main-header"></header>
-    
-    <main class="submission-container">
-        <div class="submit-card">
-            <h1>Project Delivery</h1>
-            <p>Upload your final files and submission notes below.</p>
-            
-            <form id="delivery-form">
-                <div class="form-group">
-                    <label for="file-upload">Upload Deliverable (PDF, ZIP, DOCX)</label>
-                    <input type="file" id="file-upload" required>
-                </div>
-                <div class="form-group">
-                    <label for="notes">Final Notes for Employer</label>
-                    <textarea id="notes" rows="4" placeholder="Any specific instructions or comments about the final work..."></textarea>
-                </div>
-                <button type="submit" class="btn-submit">Submit Final Work</button>
-            </form>
-        </div>
-    </main>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Submit Deliverable | FreelanceHub</title>
+        <link rel="stylesheet" href="/assets/css/styles.css" />
+    </head>
+    <body>
+        <header id="main-header"></header>
 
-    <footer id="main-footer"></footer>
+        <main class="submission-container">
+            <div class="submit-card">
+                <h1>Project Delivery</h1>
+                <p>Upload your final files and submission notes below.</p>
 
-    <script type="module">
-        import { auth, db } from '/assets/js/firebase-config.js';
-        import { doc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-        import { loadHeader, loadFooter } from '/assets/js/layout.js';
+                <form id="delivery-form">
+                    <div class="form-group">
+                        <label for="file-upload">Upload Deliverable (PDF, ZIP, DOCX)</label>
+                        <input type="file" id="file-upload" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Final Notes for Employer</label>
+                        <textarea
+                            id="notes"
+                            rows="4"
+                            placeholder="Any specific instructions or comments about the final work..."
+                        ></textarea>
+                    </div>
+                    <button type="submit" class="btn-submit">Submit Final Work</button>
+                </form>
+            </div>
+        </main>
 
-        loadHeader();
-        loadFooter();
+        <footer id="main-footer"></footer>
 
-        // Cloudinary Configuration
-        const CLOUDINARY_CLOUD_NAME = 'datdzbnlj'; 
-        const CLOUDINARY_UPLOAD_PRESET = 'ml_default';
+        <script type="module">
+            import { auth, db } from '/assets/js/firebase-config.js';
+            import {
+                doc,
+                updateDoc,
+                collection,
+                query,
+                where,
+                getDocs
+            } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+            import { loadHeader, loadFooter } from '/assets/js/layout.js';
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const jobId = urlParams.get('jobId');
+            loadHeader();
+            loadFooter();
 
-        document.getElementById('delivery-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const file = document.getElementById('file-upload').files[0];
-            const notes = document.getElementById('notes').value;
-            const user = auth.currentUser;
-            
-            if (!file || !user) return;
+            // Cloudinary Configuration
+            const CLOUDINARY_CLOUD_NAME = 'datdzbnlj';
+            const CLOUDINARY_UPLOAD_PRESET = 'ml_default';
 
-            try {
-                const btn = document.querySelector('.btn-submit');
-                btn.disabled = true;
-                btn.innerText = "Uploading File...";
+            const urlParams = new URLSearchParams(window.location.search);
+            const jobId = urlParams.get('jobId');
 
-                // 1. Upload file to Cloudinary using Unsigned Upload
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+            document.getElementById('delivery-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const file = document.getElementById('file-upload').files[0];
+                const notes = document.getElementById('notes').value;
+                const user = auth.currentUser;
 
-                const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
-                const response = await fetch(cloudinaryUrl, {
-                    method: 'POST',
-                    body: formData
-                });
+                if (!file || !user) return;
 
-                if (!response.ok) {
-                    throw new Error('Cloudinary upload failed');
-                }
+                try {
+                    const btn = document.querySelector('.btn-submit');
+                    btn.disabled = true;
+                    btn.innerText = 'Uploading File...';
 
-                const data = await response.json();
-                const downloadURL = data.secure_url;
+                    // 1. Upload file to Cloudinary using Unsigned Upload
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
-                // 2. Update job status 
-                await updateDoc(doc(db, "jobs", jobId), {
-                    status: 'submitted',
-                    deliverableUrl: downloadURL,
-                    submissionNotes: notes,
-                    submittedAt: new Date()
-                });
-
-                // 3. Update the application status to 'submitted'
-                const appQ = query(collection(db, 'applications'), 
-                    where('jobId', '==', jobId), 
-                    where('freelancerId', '==', user.uid)
-                );
-                const appSnapshot = await getDocs(appQ);
-                
-                if (!appSnapshot.empty) {
-                    const appDocId = appSnapshot.docs[0].id;
-                    await updateDoc(doc(db, 'applications', appDocId), {
-                        status: 'submitted'
+                    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
+                    const response = await fetch(cloudinaryUrl, {
+                        method: 'POST',
+                        body: formData
                     });
-                }
 
-                alert("Work submitted successfully! The employer will be notified.");
-                window.location.href = '/pages/my-jobs.html';
-            } catch (err) {
-                alert("Submission failed: " + err.message);
-                const btn = document.querySelector('.btn-submit');
-                btn.disabled = false;
-                btn.innerText = "Submit Final Work";
-            }
-        });
-    </script>
-</body>
+                    if (!response.ok) {
+                        throw new Error('Cloudinary upload failed');
+                    }
+
+                    const data = await response.json();
+                    const downloadURL = data.secure_url;
+
+                    // 2. Update job status
+                    await updateDoc(doc(db, 'jobs', jobId), {
+                        status: 'submitted',
+                        deliverableUrl: downloadURL,
+                        submissionNotes: notes,
+                        submittedAt: new Date()
+                    });
+
+                    // 3. Update the application status to 'submitted'
+                    const appQ = query(
+                        collection(db, 'applications'),
+                        where('jobId', '==', jobId),
+                        where('freelancerId', '==', user.uid)
+                    );
+                    const appSnapshot = await getDocs(appQ);
+
+                    if (!appSnapshot.empty) {
+                        const appDocId = appSnapshot.docs[0].id;
+                        await updateDoc(doc(db, 'applications', appDocId), {
+                            status: 'submitted'
+                        });
+                    }
+
+                    alert('Work submitted successfully! The employer will be notified.');
+                    window.location.href = '/pages/my-jobs.html';
+                } catch (err) {
+                    alert('Submission failed: ' + err.message);
+                    const btn = document.querySelector('.btn-submit');
+                    btn.disabled = false;
+                    btn.innerText = 'Submit Final Work';
+                }
+            });
+        </script>
+    </body>
 </html>

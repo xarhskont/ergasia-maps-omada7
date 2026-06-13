@@ -5,6 +5,6 @@ Follow these steps to refresh Claude Code's local environment, ensuring that the
 Use Claude Code's native plugin manager instead of `npx`.
 
 1. **Update the Plugin:** Run the specific CLI command to update the Firebase plugin:
-   ```bash
-   claude plugin update firebase@firebase
-   ```
+    ```bash
+    claude plugin update firebase@firebase
+    ```

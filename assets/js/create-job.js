@@ -1,5 +1,9 @@
 import { auth, db } from '/assets/js/firebase-config.js';
-import { collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+import {
+    collection,
+    addDoc,
+    serverTimestamp
+} from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 import { loadHeader, loadFooter } from '/assets/js/layout.js';
 
 loadHeader();
@@ -9,7 +13,7 @@ const jobForm = document.getElementById('create-job-form');
 
 jobForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const user = auth.currentUser;
     if (!user) {
         alert('You must be logged in to post a job!');
@@ -36,7 +40,7 @@ jobForm.addEventListener('submit', async (e) => {
         submitBtn.innerText = 'Posting...';
 
         await addDoc(collection(db, 'jobs'), jobData);
-        
+
         alert('Job posted successfully!');
         window.location.href = 'employer-dashboard.html';
     } catch (error) {

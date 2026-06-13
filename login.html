@@ -1,34 +1,61 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Job>inder</title>
-    <link rel="stylesheet" href="/assets/css/styles.css">
-</head>
-<body style="display: flex; flex-direction: column; min-height: 100vh;">
-    <header id="main-header"></header>
-    <main style="display: flex; align-items: center; justify-content: center; flex: 1;">
-        <div class="rating-container">
-            <h2 style="text-align: center; color: var(--primary-color);">Welcome Back</h2>
-            <form id="login-form">
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input type="email" id="email" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" required style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
-                </div>
-                <button type="submit" class="btn-submit">Login</button>
-                <p style="text-align: center; margin-top: 15px;">
-                    Don't have an account? <a href="/register.html" style="color: var(--primary-color); font-weight: 600;">Sign Up</a>
-                </p>
-            </form>
-        </div>
-    </main>
-    <footer id="main-footer"></footer>
-    <script type="module" src="/assets/js/login.js"></script>
-    <script type="module" src="/assets/js/layout.js"></script>
-</body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Login | Job>inder</title>
+        <link rel="stylesheet" href="/assets/css/styles.css" />
+    </head>
+    <body style="display: flex; flex-direction: column; min-height: 100vh">
+        <header id="main-header"></header>
+        <main style="display: flex; align-items: center; justify-content: center; flex: 1">
+            <div class="rating-container">
+                <h2 style="text-align: center; color: var(--primary-color)">Welcome Back</h2>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input
+                            type="email"
+                            id="email"
+                            required
+                            style="
+                                width: 100%;
+                                padding: 10px;
+                                border: 1px solid #cbd5e1;
+                                border-radius: 6px;
+                                box-sizing: border-box;
+                            "
+                        />
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input
+                            type="password"
+                            id="password"
+                            required
+                            style="
+                                width: 100%;
+                                padding: 10px;
+                                border: 1px solid #cbd5e1;
+                                border-radius: 6px;
+                                box-sizing: border-box;
+                            "
+                        />
+                    </div>
+                    <button type="submit" class="btn-submit">Login</button>
+                    <p style="text-align: center; margin-top: 15px">
+                        Don't have an account?
+                        <a
+                            href="/register.html"
+                            style="color: var(--primary-color); font-weight: 600"
+                            >Sign Up</a
+                        >
+                    </p>
+                </form>
+            </div>
+        </main>
+        <footer id="main-footer"></footer>
+        <script type="module" src="/assets/js/login.js"></script>
+        <script type="module" src="/assets/js/layout.js"></script>
+    </body>
 </html>

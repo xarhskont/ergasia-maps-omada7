@@ -1,128 +1,145 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Jobs | FreelanceHub</title>
-    <link rel="stylesheet" href="/assets/css/styles.css">
-</head>
-<body>
-    <header id="main-header"></header>
-    
-    <main class="my-jobs-container">
-        <h1>My Jobs</h1>
-        
-        <div class="jobs-status-tabs">
-            <button class="tab-btn active" data-status="all">All</button>
-            <button class="tab-btn" data-status="rejected">Rejected</button>
-            <button class="tab-btn" data-status="pending">Pending</button>
-            <button class="tab-btn" data-status="assigned">Assigned</button>
-            <button class="tab-btn" data-status="submitted">Submitted</button>
-        </div>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>My Jobs | FreelanceHub</title>
+        <link rel="stylesheet" href="/assets/css/styles.css" />
+    </head>
+    <body>
+        <header id="main-header"></header>
 
-        <div id="jobs-list" class="jobs-tracker-grid"></div>
-    </main>
+        <main class="my-jobs-container">
+            <h1>My Jobs</h1>
 
-    <footer id="main-footer"></footer>
+            <div class="jobs-status-tabs">
+                <button class="tab-btn active" data-status="all">All</button>
+                <button class="tab-btn" data-status="rejected">Rejected</button>
+                <button class="tab-btn" data-status="pending">Pending</button>
+                <button class="tab-btn" data-status="assigned">Assigned</button>
+                <button class="tab-btn" data-status="submitted">Submitted</button>
+            </div>
 
-    <script type="module">
-        import { auth, db } from '/assets/js/firebase-config.js';
-        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
-        import { collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-        import { loadHeader, loadFooter } from '/assets/js/layout.js';
+            <div id="jobs-list" class="jobs-tracker-grid"></div>
+        </main>
 
-        loadHeader();
-        loadFooter();
+        <footer id="main-footer"></footer>
 
-        const jobsList = document.getElementById('jobs-list');
-        let currentFilter = 'all';
+        <script type="module">
+            import { auth, db } from '/assets/js/firebase-config.js';
+            import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+            import {
+                collection,
+                query,
+                where,
+                getDocs,
+                doc,
+                getDoc
+            } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+            import { loadHeader, loadFooter } from '/assets/js/layout.js';
 
-        async function checkRatingAuthorization(user, jobId) {
-            if (!user || !jobId) return false;
-            try {
-                const reviewsRef = collection(db, "reviews");
-                const q = query(reviewsRef, where("jobId", "==", jobId), where("reviewerId", "==", user.uid));
-                const querySnapshot = await getDocs(q);
-                return querySnapshot.empty;
-            } catch (error) {
-                console.error("Error checking rating status:", error);
-                return false;
+            loadHeader();
+            loadFooter();
+
+            const jobsList = document.getElementById('jobs-list');
+            let currentFilter = 'all';
+
+            async function checkRatingAuthorization(user, jobId) {
+                if (!user || !jobId) return false;
+                try {
+                    const reviewsRef = collection(db, 'reviews');
+                    const q = query(
+                        reviewsRef,
+                        where('jobId', '==', jobId),
+                        where('reviewerId', '==', user.uid)
+                    );
+                    const querySnapshot = await getDocs(q);
+                    return querySnapshot.empty;
+                } catch (error) {
+                    console.error('Error checking rating status:', error);
+                    return false;
+                }
             }
-        }
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                fetchMyJobs(user);
-            } else {
-                 window.location.href = '/login.html';
-            }
-        });
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    fetchMyJobs(user);
+                } else {
+                    window.location.href = '/login.html';
+                }
+            });
 
-        async function fetchMyJobs(user) {
-            try {
-                const q = query(collection(db, "applications"), where("freelancerId", "==", user.uid));
-                const querySnapshot = await getDocs(q);
-                
-                const applications = [];
-                for (const appDoc of querySnapshot.docs) {
-                    const appData = appDoc.data();
-                    let jobTitle = `Job ID: ${appData.jobId}`; // Αν δε βρει τίτλο, δείχνει το ID
-                    let jobBudget = 'N/A';
-                    let jobDeadline = 'N/A';
-                    let jobDescription = 'No description available.';
-                    
-                    // Παίρνουμε τον πραγματικό τίτλο της δουλειάς
-                    try {
-                        const jobRef = await getDoc(doc(db, "jobs", appData.jobId));
-                        if (jobRef.exists()) {
-                            const jobData = jobRef.data();
-                            jobTitle = jobData.title || jobTitle;
-                            jobBudget = jobData.budget ? `$${jobData.budget}` : 'N/A';
-                            jobDescription = jobData.description || jobDescription;
-                            
-                            if (jobData.deadline) {
-                                jobDeadline = typeof jobData.deadline.toDate === 'function' 
-                                    ? jobData.deadline.toDate().toLocaleDateString() 
-                                    : jobData.deadline;
+            async function fetchMyJobs(user) {
+                try {
+                    const q = query(
+                        collection(db, 'applications'),
+                        where('freelancerId', '==', user.uid)
+                    );
+                    const querySnapshot = await getDocs(q);
+
+                    const applications = [];
+                    for (const appDoc of querySnapshot.docs) {
+                        const appData = appDoc.data();
+                        let jobTitle = `Job ID: ${appData.jobId}`; // Αν δε βρει τίτλο, δείχνει το ID
+                        let jobBudget = 'N/A';
+                        let jobDeadline = 'N/A';
+                        let jobDescription = 'No description available.';
+
+                        // Παίρνουμε τον πραγματικό τίτλο της δουλειάς
+                        try {
+                            const jobRef = await getDoc(doc(db, 'jobs', appData.jobId));
+                            if (jobRef.exists()) {
+                                const jobData = jobRef.data();
+                                jobTitle = jobData.title || jobTitle;
+                                jobBudget = jobData.budget ? `$${jobData.budget}` : 'N/A';
+                                jobDescription = jobData.description || jobDescription;
+
+                                if (jobData.deadline) {
+                                    jobDeadline =
+                                        typeof jobData.deadline.toDate === 'function'
+                                            ? jobData.deadline.toDate().toLocaleDateString()
+                                            : jobData.deadline;
+                                }
                             }
+                        } catch (e) {
+                            console.error('Error fetching job title:', e);
                         }
-                    } catch (e) {
-                        console.error("Error fetching job title:", e);
+
+                        applications.push({
+                            id: appDoc.id,
+                            jobTitle,
+                            jobBudget,
+                            jobDeadline,
+                            jobDescription,
+                            ...appData
+                        });
                     }
 
-                    applications.push({ 
-                        id: appDoc.id, 
-                        jobTitle, 
-                        jobBudget, 
-                        jobDeadline, 
-                        jobDescription, 
-                        ...appData 
-                    });
+                    const filtered =
+                        currentFilter === 'all'
+                            ? applications
+                            : applications.filter((app) => app.status === currentFilter);
+
+                    await renderJobs(filtered, user);
+                } catch (err) {
+                    console.error('Error fetching applications:', err);
+                }
+            }
+
+            async function renderJobs(apps, user) {
+                if (apps.length === 0) {
+                    jobsList.innerHTML = `<p class="empty-msg">No jobs found for this category.</p>`;
+                    return;
                 }
 
-                const filtered = currentFilter === 'all' 
-                    ? applications 
-                    : applications.filter(app => app.status === currentFilter);
-
-                await renderJobs(filtered, user);
-            } catch (err) {
-                console.error("Error fetching applications:", err);
-            }
-        }
-
-        async function renderJobs(apps, user) {
-                    if (apps.length === 0) {
-                        jobsList.innerHTML = `<p class="empty-msg">No jobs found for this category.</p>`;
-                        return;
-                    }
-
-                    let html = '';
-                    for (const app of apps) {
-                        const canRate = (app.status === 'submitted' || app.status === 'completed') 
-                            ? await checkRatingAuthorization(user, app.jobId) 
+                let html = '';
+                for (const app of apps) {
+                    const canRate =
+                        app.status === 'submitted' || app.status === 'completed'
+                            ? await checkRatingAuthorization(user, app.jobId)
                             : false;
 
-                        html += `
+                    html += `
                             <div class="tracker-card">
                                 <div class="tracker-header" style="margin-bottom: 10px;">
                                     <strong style="font-size: 1.1rem; color: var(--primary-color);">${app.jobTitle}</strong>
@@ -146,22 +163,23 @@
                                   ${canRate ? `<a href="/pages/job-details.html?id=${app.jobId}&rate=true" class="btn-submit-work" style="display: block; text-align: center; margin-top: 10px; background-color: #8b5cf6;">Rate Job</a>` : ''}
                             </div>
                         `;
+                }
+                jobsList.innerHTML = html;
+            }
+
+            document.querySelectorAll('.tab-btn').forEach((btn) => {
+                btn.addEventListener('click', (e) => {
+                    document
+                        .querySelectorAll('.tab-btn')
+                        .forEach((b) => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    currentFilter = e.target.dataset.status;
+
+                    if (auth.currentUser) {
+                        fetchMyJobs(auth.currentUser);
                     }
-                    jobsList.innerHTML = html;
-                }
-
-
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                currentFilter = e.target.dataset.status;
-                
-                if (auth.currentUser) {
-                    fetchMyJobs(auth.currentUser);
-                }
+                });
             });
-        });
-    </script>
-</body>
+        </script>
+    </body>
 </html>

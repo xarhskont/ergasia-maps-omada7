@@ -1,12 +1,17 @@
 // layout.js
 import { auth } from './firebase-config.js';
-import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+import {
+    onAuthStateChanged,
+    signOut
+} from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 import { getDoc, doc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 import { db } from './firebase-config.js';
 
 export async function loadHeader() {
     const header = document.getElementById('main-header');
-    if (!header) return;
+    if (!header) {
+        return;
+    }
 
     const user = auth.currentUser;
     const brandPurple = '#7c3aed';
@@ -20,13 +25,14 @@ export async function loadHeader() {
         let profilePath = '/pages/profile.html';
         let dashboardPath = '/pages/my-jobs.html';
         let role = null;
-        
+
         try {
             const userDoc = await getDoc(doc(db, 'users', user.uid));
             if (userDoc.exists()) {
                 role = userDoc.data().role;
-                dashboardPath = role === 'employer' ? '/pages/employer-dashboard.html' : '/pages/my-jobs.html';
-                
+                dashboardPath =
+                    role === 'employer' ? '/pages/employer-dashboard.html' : '/pages/my-jobs.html';
+
                 if (role === 'employer') {
                     dashboardLink = `<li><a href="${dashboardPath}">My Jobs</a></li>
                                      <li><a href="/pages/create-job.html">Post a Job</a></li>`;
@@ -35,17 +41,19 @@ export async function loadHeader() {
                     dashboardLink = `<li><a href="${dashboardPath}">Dashboard</a></li>`;
                     profilePath = '/pages/freelancer-profile.html';
                 }
-
             }
         } catch (err) {
-            console.error("Error fetching role for header:", err);
+            console.error('Error fetching role for header:', err);
         }
 
         // 1η ΔΙΟΡΘΩΣΗ: Το λογότυπο λειτουργεί πλέον ως Home για τους συνδεδεμένους (πάει στο Dashboard)
         logoHref = dashboardPath;
 
         // Show Search link to non-employers only
-        const searchLink = role === 'employer' ? '' : '<li><a href="/pages/freelancer-marketplace.html">Search</a></li>';
+        const searchLink =
+            role === 'employer'
+                ? ''
+                : '<li><a href="/pages/freelancer-marketplace.html">Search</a></li>';
 
         // 2η ΔΙΟΡΘΩΣΗ: Αφαιρέθηκε το ελαττωματικό "Home" link. Έμειναν μόνο τα απαραίτητα.
         navLinks = `
@@ -87,7 +95,9 @@ export async function loadHeader() {
 
 export function loadFooter() {
     const footer = document.getElementById('main-footer');
-    if (!footer) return;
+    if (!footer) {
+        return;
+    }
 
     footer.innerHTML = `
         <footer class="main-footer">

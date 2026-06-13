@@ -22,19 +22,18 @@ loginForm.addEventListener('submit', async (e) => {
         const user = userCredential.user;
 
         const userDoc = await getDoc(doc(db, 'users', user.uid));
-        
+
         if (userDoc.exists()) {
             const userData = userDoc.data();
             const role = userData.role;
             alert(`Welcome back, ${userData.fullName}!`);
-            
+
             // ΔΙΟΡΘΩΣΗ: Προστέθηκε το αρχικό '/' για να μη σπάει ποτέ η διαδρομή
             if (role === 'employer') {
-                window.location.href = '/pages/employer-dashboard.html'; 
+                window.location.href = '/pages/employer-dashboard.html';
             } else {
                 window.location.href = '/pages/freelancer-marketplace.html';
             }
-
         } else {
             throw new Error('User profile not found in database.');
         }

@@ -1,6 +1,10 @@
 import { auth, db } from './firebase-config.js';
 import { createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
-import { doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+import {
+    doc,
+    setDoc,
+    serverTimestamp
+} from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 import { loadHeader, loadFooter } from './layout.js';
 
 loadHeader();
@@ -10,7 +14,7 @@ const registerForm = document.getElementById('register-form');
 
 registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const fullName = document.getElementById('fullName').value;
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;

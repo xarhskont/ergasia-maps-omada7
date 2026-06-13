@@ -1,5 +1,13 @@
 import { auth, db } from '/assets/js/firebase-config.js';
-import { doc, getDoc, collection, query, where, getDocs, updateDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+import {
+    doc,
+    getDoc,
+    collection,
+    query,
+    where,
+    getDocs,
+    updateDoc
+} from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 import { loadHeader, loadFooter } from '/assets/js/layout.js';
 
 loadHeader();
@@ -17,44 +25,46 @@ async function fetchApplications() {
         return;
     }
 
-        try {
-            const jobDoc = await getDoc(doc(db, 'jobs', jobId));
-            if (!jobDoc.exists()) {
-                appsGrid.innerHTML = '<p class="error-msg">Job not found.</p>';
-                return;
+    try {
+        const jobDoc = await getDoc(doc(db, 'jobs', jobId));
+        if (!jobDoc.exists()) {
+            appsGrid.innerHTML = '<p class="error-msg">Job not found.</p>';
+            return;
+        }
+
+        const jobData = jobDoc.data();
+        titleDisplay.innerText = jobData.title;
+
+        // REAL LOGIC: Query the 'applications' collection for this specific jobId
+        const q = query(collection(db, 'applications'), where('jobId', '==', jobId));
+        const querySnapshot = await getDocs(q);
+
+        appsGrid.innerHTML = '';
+        if (querySnapshot.empty) {
+            appsGrid.innerHTML = '<p class="empty-msg">No one has applied to this job yet.</p>';
+            return;
+        }
+
+        // For each application, we need to fetch the freelancer's user details
+        for (const appDoc of querySnapshot.docs) {
+            const appData = appDoc.data();
+
+            // Skip rendering if the application is already rejected
+            if (appData.status === 'rejected') {
+                continue;
             }
-            
-            const jobData = jobDoc.data();
-            titleDisplay.innerText = jobData.title;
 
-            // REAL LOGIC: Query the 'applications' collection for this specific jobId
-            const q = query(collection(db, 'applications'), where('jobId', '==', jobId));
-            const querySnapshot = await getDocs(q);
+            const freelancerId = appData.freelancerId;
 
-            appsGrid.innerHTML = '';
-            if (querySnapshot.empty) {
-                appsGrid.innerHTML = '<p class="empty-msg">No one has applied to this job yet.</p>';
-                return;
-            }
+            // Fetch freelancer profile
+            const userDoc = await getDoc(doc(db, 'users', freelancerId));
+            const user = userDoc.exists()
+                ? userDoc.data()
+                : { fullName: 'Unknown Freelancer', bio: 'No profile available' };
 
-            // For each application, we need to fetch the freelancer's user details
-            for (const appDoc of querySnapshot.docs) {
-                const appData = appDoc.data();
-
-                // Skip rendering if the application is already rejected
-                if (appData.status === 'rejected') {
-                    continue; 
-                }
-                
-                const freelancerId = appData.freelancerId;
-                
-                // Fetch freelancer profile
-                const userDoc = await getDoc(doc(db, 'users', freelancerId));
-                const user = userDoc.exists() ? userDoc.data() : { fullName: 'Unknown Freelancer', bio: 'No profile available' };
-                
-                const card = document.createElement('div');
-                card.className = 'job-card';
-                card.innerHTML = `
+            const card = document.createElement('div');
+            card.className = 'job-card';
+            card.innerHTML = `
                     <h3>${user.fullName}</h3>
                     <p class="job-excerpt">${user.bio || 'No bio provided.'}</p>
                     <div class="job-meta">
@@ -67,52 +77,58 @@ async function fetchApplications() {
                         <button class="btn-submit" id="reject-${freelancerId}" style="flex: 1; display: flex; justify-content: center; align-items: center; box-sizing: border-box; border: none; cursor: pointer; padding: 12px; background: #ef4444; color: white; border-radius: 8px; font-weight: 600; font-size: 1rem;">Reject</button>
                     </div>
                 `;
-                appsGrid.appendChild(card);
+            appsGrid.appendChild(card);
 
-                document.getElementById(`hire-${freelancerId}`).addEventListener('click', async () => {
-                    if (confirm(`Are you sure you want to hire ${user.fullName}?`)) {
-                        try {
-                            // 1. Update the Job document
-                            await updateDoc(doc(db, 'jobs', jobId), {
-                                status: 'assigned',
-                                assignedFreelancerId: freelancerId,
-                                assignedFreelancerName: user.fullName
+            document.getElementById(`hire-${freelancerId}`).addEventListener('click', async () => {
+                if (confirm(`Are you sure you want to hire ${user.fullName}?`)) {
+                    try {
+                        // 1. Update the Job document
+                        await updateDoc(doc(db, 'jobs', jobId), {
+                            status: 'assigned',
+                            assignedFreelancerId: freelancerId,
+                            assignedFreelancerName: user.fullName
+                        });
+
+                        // 2. Update the specific Application document to 'accepted'
+                        const appQ = query(
+                            collection(db, 'applications'),
+                            where('jobId', '==', jobId),
+                            where('freelancerId', '==', freelancerId)
+                        );
+                        const appSnapshot = await getDocs(appQ);
+
+                        if (!appSnapshot.empty) {
+                            const appDocId = appSnapshot.docs[0].id;
+                            await updateDoc(doc(db, 'applications', appDocId), {
+                                status: 'assigned'
                             });
-
-                            // 2. Update the specific Application document to 'accepted'
-                            const appQ = query(collection(db, 'applications'), 
-                                where('jobId', '==', jobId), 
-                                where('freelancerId', '==', freelancerId)
-                            );
-                            const appSnapshot = await getDocs(appQ);
-                            
-                            if (!appSnapshot.empty) {
-                                const appDocId = appSnapshot.docs[0].id;
-                                await updateDoc(doc(db, 'applications', appDocId), {
-                                    status: 'assigned'
-                                });
-                            }
-
-                            alert('Freelancer hired successfully!');
-                            window.location.href = 'employer-dashboard.html';
-                        } catch (error) {
-                            console.error("Hire Error:", error);
-                            alert("Error during hiring process: " + error.message);
                         }
-                    }
-                });
 
-                // Reject logic added here
-                document.getElementById(`reject-${freelancerId}`).addEventListener('click', async () => {
-                    if (confirm(`Are you sure you want to reject ${user.fullName}'s application?`)) {
+                        alert('Freelancer hired successfully!');
+                        window.location.href = 'employer-dashboard.html';
+                    } catch (error) {
+                        console.error('Hire Error:', error);
+                        alert('Error during hiring process: ' + error.message);
+                    }
+                }
+            });
+
+            // Reject logic added here
+            document
+                .getElementById(`reject-${freelancerId}`)
+                .addEventListener('click', async () => {
+                    if (
+                        confirm(`Are you sure you want to reject ${user.fullName}'s application?`)
+                    ) {
                         try {
                             // Update the specific Application document to 'rejected'
-                            const appQ = query(collection(db, 'applications'), 
-                                where('jobId', '==', jobId), 
+                            const appQ = query(
+                                collection(db, 'applications'),
+                                where('jobId', '==', jobId),
                                 where('freelancerId', '==', freelancerId)
                             );
                             const appSnapshot = await getDocs(appQ);
-                            
+
                             if (!appSnapshot.empty) {
                                 const appDocId = appSnapshot.docs[0].id;
                                 await updateDoc(doc(db, 'applications', appDocId), {
@@ -124,17 +140,16 @@ async function fetchApplications() {
                             // Reload the page to reflect the new state (or to trigger UI updates based on your dashboard logic)
                             window.location.reload();
                         } catch (error) {
-                            console.error("Reject Error:", error);
-                            alert("Error during rejection process: " + error.message);
+                            console.error('Reject Error:', error);
+                            alert('Error during rejection process: ' + error.message);
                         }
                     }
                 });
-            }
-        } catch (error) {
-            console.error('Error fetching applications:', error);
-            appsGrid.innerHTML = '<p class="error-msg">Error loading applications.</p>';
         }
-
+    } catch (error) {
+        console.error('Error fetching applications:', error);
+        appsGrid.innerHTML = '<p class="error-msg">Error loading applications.</p>';
+    }
 }
 
 fetchApplications();

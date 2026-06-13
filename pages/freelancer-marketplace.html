@@ -1,98 +1,112 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Job Marketplace | FreelanceHub</title>
-    <link rel="stylesheet" href="/assets/css/styles.css">
-</head>
-<body>
-    <header id="main-header"></header>
-    
-    <main class="marketplace-container">
-        <section class="filter-section">
-            <h1>Available Jobs</h1>
-            <div class="search-controls">
-                <input type="text" id="search-input" placeholder="Search by skill or keyword...">
-                <select id="budget-filter">
-                    <option value="all">All Budgets</option>
-                    <option value="low">$0 - $50</option>
-                    <option value="mid">$50 - $200</option>
-                    <option value="high">$200+</option>
-                </select>
-                <button id="filter-btn">Filter</button>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Job Marketplace | FreelanceHub</title>
+        <link rel="stylesheet" href="/assets/css/styles.css" />
+    </head>
+    <body>
+        <header id="main-header"></header>
+
+        <main class="marketplace-container">
+            <section class="filter-section">
+                <h1>Available Jobs</h1>
+                <div class="search-controls">
+                    <input
+                        type="text"
+                        id="search-input"
+                        placeholder="Search by skill or keyword..."
+                    />
+                    <select id="budget-filter">
+                        <option value="all">All Budgets</option>
+                        <option value="low">$0 - $50</option>
+                        <option value="mid">$50 - $200</option>
+                        <option value="high">$200+</option>
+                    </select>
+                    <button id="filter-btn">Filter</button>
+                </div>
+            </section>
+
+            <div id="jobs-grid" class="jobs-grid">
+                <div class="loading-spinner">Loading awesome opportunities...</div>
             </div>
-        </section>
+        </main>
 
-        <div id="jobs-grid" class="jobs-grid">
-            <div class="loading-spinner">Loading awesome opportunities...</div>
-        </div>
-    </main>
+        <footer id="main-footer"></footer>
 
-    <footer id="main-footer"></footer>
+        <script type="module">
+            import { auth, db } from '/assets/js/firebase-config.js';
+            import {
+                collection,
+                query,
+                where,
+                getDocs
+            } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+            import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+            import { loadHeader, loadFooter } from '/assets/js/layout.js';
 
-    <script type="module">
-        import { auth, db } from '/assets/js/firebase-config.js';
-        import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-        import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
-        import { loadHeader, loadFooter } from '/assets/js/layout.js';
+            loadHeader();
+            loadFooter();
 
-        loadHeader();
-        loadFooter();
+            const jobsGrid = document.getElementById('jobs-grid');
+            const searchInput = document.getElementById('search-input');
+            const budgetSelect = document.getElementById('budget-filter');
 
-        const jobsGrid = document.getElementById('jobs-grid');
-        const searchInput = document.getElementById('search-input');
-        const budgetSelect = document.getElementById('budget-filter');
+            let allOpenJobs = [];
+            let currentUserRole = 'guest';
 
-        let allOpenJobs = []; 
-        let currentUserRole = 'guest';
-
-        // Περιμένουμε ΠΡΩΤΑ να επιβεβαιωθεί ο ρόλος του χρήστη
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                try {
-                    const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js");
-                    const userDoc = await getDoc(doc(db, "users", user.uid));
-                    if (userDoc.exists()) {
-                        currentUserRole = userDoc.data().role ? userDoc.data().role.toLowerCase().trim() : 'guest';
+            // Περιμένουμε ΠΡΩΤΑ να επιβεβαιωθεί ο ρόλος του χρήστη
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    try {
+                        const { doc, getDoc } =
+                            await import('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js');
+                        const userDoc = await getDoc(doc(db, 'users', user.uid));
+                        if (userDoc.exists()) {
+                            currentUserRole = userDoc.data().role
+                                ? userDoc.data().role.toLowerCase().trim()
+                                : 'guest';
+                        }
+                    } catch (err) {
+                        console.error('Error fetching user role:', err);
                     }
+                }
+                // ΚΑΙ ΜΕΤΑ κατεβάζουμε τις εργασίες (έτσι το Apply Now θα εμφανιστεί σωστά)
+                fetchOpenJobs();
+            });
+
+            async function fetchOpenJobs() {
+                try {
+                    const q = query(collection(db, 'jobs'), where('status', '==', 'open'));
+                    const querySnapshot = await getDocs(q);
+
+                    allOpenJobs = [];
+                    querySnapshot.forEach((doc) => {
+                        allOpenJobs.push({ id: doc.id, ...doc.data() });
+                    });
+
+                    renderJobs(allOpenJobs);
                 } catch (err) {
-                    console.error("Error fetching user role:", err);
+                    console.error('Error fetching jobs:', err);
+                    jobsGrid.innerHTML = `<p class="error-msg">Failed to load jobs. Please try again later.</p>`;
                 }
             }
-            // ΚΑΙ ΜΕΤΑ κατεβάζουμε τις εργασίες (έτσι το Apply Now θα εμφανιστεί σωστά)
-            fetchOpenJobs();
-        });
 
-        async function fetchOpenJobs() {
-            try {
-                const q = query(collection(db, "jobs"), where("status", "==", "open"));
-                const querySnapshot = await getDocs(q);
-                
-                allOpenJobs = []; 
-                querySnapshot.forEach((doc) => {
-                    allOpenJobs.push({ id: doc.id, ...doc.data() });
-                });
+            function renderJobs(jobsToRender) {
+                if (!jobsToRender || jobsToRender.length === 0) {
+                    jobsGrid.innerHTML = `<p class="empty-msg">No jobs found matching your criteria.</p>`;
+                    return;
+                }
 
-                renderJobs(allOpenJobs);
-            } catch (err) {
-                console.error("Error fetching jobs:", err);
-                jobsGrid.innerHTML = `<p class="error-msg">Failed to load jobs. Please try again later.</p>`;
-            }
-        }
+                jobsGrid.innerHTML = jobsToRender
+                    .map((job) => {
+                        const deadlineDate =
+                            job.deadline && typeof job.deadline.toDate === 'function'
+                                ? job.deadline.toDate().toLocaleDateString()
+                                : job.deadline;
 
-        function renderJobs(jobsToRender) {
-            if (!jobsToRender || jobsToRender.length === 0) {
-                jobsGrid.innerHTML = `<p class="empty-msg">No jobs found matching your criteria.</p>`;
-                return;
-            }
-
-            jobsGrid.innerHTML = jobsToRender.map(job => {
-                const deadlineDate = job.deadline && typeof job.deadline.toDate === 'function' 
-                    ? job.deadline.toDate().toLocaleDateString() 
-                    : job.deadline;
-
-                return `
+                        return `
                     <div class="job-card">
                         <h3 style="margin-bottom: 10px;">${job.title}</h3>
                         <p class="job-excerpt" style="margin-bottom: 15px; color: #64748b;">${job.description.substring(0, 100)}...</p>
@@ -106,33 +120,35 @@
                         </div>
                     </div>
                 `;
-            }).join('');
-        }
+                    })
+                    .join('');
+            }
 
-        document.getElementById('filter-btn').addEventListener('click', () => {
-            const searchTerm = searchInput.value.toLowerCase().trim();
-            const budgetFilter = budgetSelect.value;
-            
-            const filtered = allOpenJobs.filter(job => {
-                const matchesText = job.title.toLowerCase().includes(searchTerm) || 
-                                    job.description.toLowerCase().includes(searchTerm);
-                
-                let matchesBudget = true;
-                const budget = Number(job.budget) || 0;
-                
-                if (budgetFilter === 'low') {
-                    matchesBudget = budget <= 50;
-                } else if (budgetFilter === 'mid') {
-                    matchesBudget = budget > 50 && budget <= 200;
-                } else if (budgetFilter === 'high') {
-                    matchesBudget = budget > 200;
-                }
+            document.getElementById('filter-btn').addEventListener('click', () => {
+                const searchTerm = searchInput.value.toLowerCase().trim();
+                const budgetFilter = budgetSelect.value;
 
-                return matchesText && matchesBudget;
+                const filtered = allOpenJobs.filter((job) => {
+                    const matchesText =
+                        job.title.toLowerCase().includes(searchTerm) ||
+                        job.description.toLowerCase().includes(searchTerm);
+
+                    let matchesBudget = true;
+                    const budget = Number(job.budget) || 0;
+
+                    if (budgetFilter === 'low') {
+                        matchesBudget = budget <= 50;
+                    } else if (budgetFilter === 'mid') {
+                        matchesBudget = budget > 50 && budget <= 200;
+                    } else if (budgetFilter === 'high') {
+                        matchesBudget = budget > 200;
+                    }
+
+                    return matchesText && matchesBudget;
+                });
+
+                renderJobs(filtered);
             });
-
-            renderJobs(filtered);
-        });
-    </script>
-</body>
+        </script>
+    </body>
 </html>

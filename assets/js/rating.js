@@ -1,6 +1,13 @@
 // rating.js
 import { db, auth } from './firebase-config.js';
-import { collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import {
+    collection,
+    addDoc,
+    query,
+    where,
+    getDocs,
+    serverTimestamp
+} from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 
 /**
  * Submits a rating for a user
@@ -12,17 +19,23 @@ import { collection, addDoc, query, where, getDocs, serverTimestamp } from "http
  */
 export async function submitRating(jobId, revieweeId, rating, comment, type) {
     const user = auth.currentUser;
-    if (!user) throw new Error("User must be authenticated to submit a rating");
+    if (!user) {
+        throw new Error('User must be authenticated to submit a rating');
+    }
 
     try {
         const reviewsRef = collection(db, 'reviews');
-        
+
         // Check for existing review by this user for this job
-        const q = query(reviewsRef, where("jobId", "==", jobId), where("reviewerId", "==", user.uid));
+        const q = query(
+            reviewsRef,
+            where('jobId', '==', jobId),
+            where('reviewerId', '==', user.uid)
+        );
         const querySnapshot = await getDocs(q);
-        
+
         if (!querySnapshot.empty) {
-            throw new Error("You have already submitted a rating for this job.");
+            throw new Error('You have already submitted a rating for this job.');
         }
 
         await addDoc(reviewsRef, {
@@ -36,7 +49,7 @@ export async function submitRating(jobId, revieweeId, rating, comment, type) {
         });
         return { success: true };
     } catch (error) {
-        console.error("Error submitting rating: ", error);
+        console.error('Error submitting rating: ', error);
         throw error;
     }
 }
@@ -48,9 +61,9 @@ export async function submitRating(jobId, revieweeId, rating, comment, type) {
 export async function getUserRatings(userId) {
     try {
         const reviewsRef = collection(db, 'reviews');
-        const q = query(reviewsRef, where("revieweeId", "==", userId));
+        const q = query(reviewsRef, where('revieweeId', '==', userId));
         const querySnapshot = await getDocs(q);
-        
+
         const reviews = [];
         let totalRating = 0;
 
@@ -68,7 +81,7 @@ export async function getUserRatings(userId) {
             reviews: reviews.sort((a, b) => b.createdAt - a.createdAt)
         };
     } catch (error) {
-        console.error("Error fetching ratings: ", error);
+        console.error('Error fetching ratings: ', error);
         throw error;
     }
 }

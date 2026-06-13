@@ -10,17 +10,17 @@ optimize your queries.
 
 An index consists of the following:
 
-*   a collection ID.
-*   a list of fields in the given collection.
-*   an order, either ascending or descending, for each field.
+- a collection ID.
+- a list of fields in the given collection.
+- an order, either ascending or descending, for each field.
 
 ### Index Ordering
 
 The order and sort direction of each field uniquely defines the index. For
 example, the following indexes are two distinct indexes and not interchangeable:
 
-*   Field name `name` (ascending) and `population` (descending)
-*   Field name `name` (descending) and `population` (ascending)
+- Field name `name` (ascending) and `population` (descending)
+- Field name `name` (descending) and `population` (ascending)
 
 ### Index Density
 
@@ -43,23 +43,24 @@ create index entries with duplicate values.
 
 ## Query Support Examples
 
-| Query Type                           | Index Required                       |
-| :----------------------------------- | :----------------------------------- |
-| **Simple Equality**<br>`where("a",   | Single-Field Index on field `a`      |
+| Query Type                         | Index Required                  |
+| :--------------------------------- | :------------------------------ |
+| **Simple Equality**<br>`where("a", | Single-Field Index on field `a` |
+
 : "==", 1)`                            :                                      :
-| **Simple Range/Sort**<br>`where("a", | Single-Field Index on field `a`      |
+| **Simple Range/Sort**<br>`where("a", | Single-Field Index on field `a` |
 : ">", 1).orderBy("a")`                :                                      :
-| **Multiple Equality**<br>`where("a", | Single-Field Index on field `a` and  |
-: "==", 1).where("b", "==", 2)`        : `b`                                  :
-| **Equality +                         | **Composite Index** on field `a` and |
-: Range/Sort**<br>`where("a", "==",    : `b`                                  :
+| **Multiple Equality**<br>`where("a", | Single-Field Index on field `a` and |
+: "==", 1).where("b", "==", 2)`       :`b`                                 :
+| **Equality +                         | **Composite Index** on field`a` and |
+: Range/Sort**<br>`where("a", "==", : `b` :
 : 1).where("b", ">", 2)`               :                                      :
-| **Multiple Ranges**<br>`where("a",   | **Composite Index** on field `a` and |
-: ">", 1).where("b", ">", 2)`          : `b`                                  :
-| **Array Contains +                   | **Composite Index** on field `tags`  |
-: Equality**<br>`where("tags",         : and `active`                         :
-: "array-contains",                    :                                      :
-: "news").where("active", "==", true)` :                                      :
+| **Multiple Ranges**<br>`where("a", | **Composite Index** on field `a` and |
+: ">", 1).where("b", ">", 2)`         :`b`                                 :
+| **Array Contains +                   | **Composite Index** on field`tags`  |
+: Equality**<br>`where("tags", : and `active` :
+: "array-contains", : :
+: "news").where("active", "==", true)` : :
 
 If no indexes is present, Firestore Enterprise will perform a full collection
 scan to find documents that match a query.
@@ -75,18 +76,18 @@ Define a dense index:
 
 ```json
 {
-  "indexes": [
-    {
-      "collectionGroup": "cities",
-      "queryScope": "COLLECTION",
-      "density": "DENSE",
-      "fields": [
-        { "fieldPath": "country", "order": "ASCENDING" },
-        { "fieldPath": "population", "order": "DESCENDING" }
-      ]
-    }
-  ],
-  "fieldOverrides": []
+    "indexes": [
+        {
+            "collectionGroup": "cities",
+            "queryScope": "COLLECTION",
+            "density": "DENSE",
+            "fields": [
+                { "fieldPath": "country", "order": "ASCENDING" },
+                { "fieldPath": "population", "order": "DESCENDING" }
+            ]
+        }
+    ],
+    "fieldOverrides": []
 }
 ```
 
@@ -94,18 +95,18 @@ Define a sparse-any index:
 
 ```json
 {
-  "indexes": [
-    {
-      "collectionGroup": "cities",
-      "queryScope": "COLLECTION",
-      "density": "SPARSE_ANY",
-      "fields": [
-        { "fieldPath": "country", "order": "ASCENDING" },
-        { "fieldPath": "population", "order": "DESCENDING" }
-      ]
-    }
-  ],
-  "fieldOverrides": []
+    "indexes": [
+        {
+            "collectionGroup": "cities",
+            "queryScope": "COLLECTION",
+            "density": "SPARSE_ANY",
+            "fields": [
+                { "fieldPath": "country", "order": "ASCENDING" },
+                { "fieldPath": "population", "order": "DESCENDING" }
+            ]
+        }
+    ],
+    "fieldOverrides": []
 }
 ```
 
@@ -113,19 +114,19 @@ Define a unique index:
 
 ```json
 {
-  "indexes": [
-    {
-      "collectionGroup": "cities",
-      "queryScope": "COLLECTION",
-      "density": "SPARSE_ANY",
-      "unique": true,
-      "fields": [
-        { "fieldPath": "country", "order": "ASCENDING" },
-        { "fieldPath": "population", "order": "DESCENDING" }
-      ]
-    }
-  ],
-  "fieldOverrides": []
+    "indexes": [
+        {
+            "collectionGroup": "cities",
+            "queryScope": "COLLECTION",
+            "density": "SPARSE_ANY",
+            "unique": true,
+            "fields": [
+                { "fieldPath": "country", "order": "ASCENDING" },
+                { "fieldPath": "population", "order": "DESCENDING" }
+            ]
+        }
+    ],
+    "fieldOverrides": []
 }
 ```
 

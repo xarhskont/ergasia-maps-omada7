@@ -1,5 +1,13 @@
 import { auth, db } from '/assets/js/firebase-config.js';
-import { collection, query, where, getDocs, deleteDoc, doc, getDoc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+import {
+    collection,
+    query,
+    where,
+    getDocs,
+    deleteDoc,
+    doc,
+    getDoc
+} from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 import { loadHeader, loadFooter } from '/assets/js/layout.js';
 
@@ -35,26 +43,38 @@ async function initDashboard() {
 
 async function checkRatingAuthorization(user, jobId) {
     try {
-        const reviewsRef = collection(db, "reviews");
-        const q = query(reviewsRef, where("jobId", "==", jobId), where("reviewerId", "==", user.uid));
+        const reviewsRef = collection(db, 'reviews');
+        const q = query(
+            reviewsRef,
+            where('jobId', '==', jobId),
+            where('reviewerId', '==', user.uid)
+        );
         const querySnapshot = await getDocs(q);
-        console.log(`Checking review for job ${jobId}, user ${user.uid}. Found: ${querySnapshot.size}`);
+        console.log(
+            `Checking review for job ${jobId}, user ${user.uid}. Found: ${querySnapshot.size}`
+        );
         return querySnapshot.empty;
     } catch (error) {
-        console.error("Error checking rating status:", error);
+        console.error('Error checking rating status:', error);
         return false;
     }
 }
 
 async function fetchJobs(statusFilter = 'all') {
     const user = auth.currentUser;
-    if (!user) return;
+    if (!user) {
+        return;
+    }
 
     try {
         let q = query(collection(db, 'jobs'), where('employerId', '==', user.uid));
-        
+
         if (statusFilter !== 'all') {
-            q = query(collection(db, 'jobs'), where('employerId', '==', user.uid), where('status', '==', statusFilter));
+            q = query(
+                collection(db, 'jobs'),
+                where('employerId', '==', user.uid),
+                where('status', '==', statusFilter)
+            );
         }
 
         const querySnapshot = await getDocs(q);
@@ -68,10 +88,10 @@ async function fetchJobs(statusFilter = 'all') {
         for (const jobDoc of querySnapshot.docs) {
             const job = jobDoc.data();
             const id = jobDoc.id;
-            
+
             const card = document.createElement('div');
             card.className = 'tracker-card';
-            
+
             let extraContent = '';
             if (job.status === 'submitted') {
                 extraContent = `
@@ -109,7 +129,11 @@ async function fetchJobs(statusFilter = 'all') {
 
             if (job.status === 'open') {
                 document.getElementById(`del-${id}`).addEventListener('click', async () => {
-                    if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+                    if (
+                        confirm(
+                            'Are you sure you want to delete this job? This action cannot be undone.'
+                        )
+                    ) {
                         try {
                             await deleteDoc(doc(db, 'jobs', id));
                             alert('Job deleted successfully!');
@@ -130,7 +154,7 @@ async function fetchJobs(statusFilter = 'all') {
 statusFilters.addEventListener('click', (e) => {
     const target = e.target.closest('.tab-btn');
     if (target) {
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach((btn) => btn.classList.remove('active'));
         target.classList.add('active');
         fetchJobs(target.dataset.status);
     }
