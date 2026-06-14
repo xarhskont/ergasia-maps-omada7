@@ -21,6 +21,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Fix ESLint Executable Permissions
+        run: chmod +x ./node_modules/.bin/eslint
+
       - name: Run Linting
         run: npm run lint
 
@@ -28,14 +31,12 @@ jobs:
         run: npm run format:check
 
       - name: Run Unit Tests
-        run: |
-          export NODE_OPTIONS=--experimental-vm-modules
-          npm test -- --testPathPattern=validation.test.js
+        run: npx jest validation.test.js
+        env:
+          NODE_OPTIONS: --experimental-vm-modules
 
       - name: Check files
-        run: |
-          test -f index.html
+        run: test -f index.html
 
       - name: Build Docker image
-        run: |
-          docker build -t ergasia-maps .
+        run: docker build -t ergasia-maps .
