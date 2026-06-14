@@ -65,12 +65,10 @@ export async function getUserRatings(userId) {
         const querySnapshot = await getDocs(q);
 
         const reviews = [];
-        let totalRating = 0;
 
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             reviews.push({ id: doc.id, ...data });
-            totalRating += data.rating;
         });
 
         const average = calculateAverageRating(reviews);

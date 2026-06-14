@@ -1,5 +1,5 @@
 import { submitRating, getUserRatings } from '../assets/js/rating.js';
-import { auth, db } from '../assets/js/firebase-config.js';
+import { auth } from '../assets/js/firebase-config.js';
 
 // Mocking Firebase Auth
 jest.mock('../assets/js/firebase-config.js', () => ({

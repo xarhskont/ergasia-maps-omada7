@@ -2,7 +2,6 @@
 import { auth } from './firebase-config.js';
 import {
     onAuthStateChanged,
-    signOut
 } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
 import { getDoc, doc } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 import { db } from './firebase-config.js';

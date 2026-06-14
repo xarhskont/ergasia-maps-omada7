@@ -63,9 +63,9 @@ export function validateRatingValue(rating) {
  * @returns {boolean}
  */
 export function canChangeStatus(currentStatus, nextStatus) {
-    if (nextStatus === 'cancelled') return true;
-    if (currentStatus === 'open' && nextStatus === 'assigned') return true;
-    if (currentStatus === 'assigned' && nextStatus === 'completed') return true;
+    if (nextStatus === 'cancelled') {return true;}
+    if (currentStatus === 'open' && nextStatus === 'assigned') {return true;}
+    if (currentStatus === 'assigned' && nextStatus === 'completed') {return true;}
     return false;
 }
 
@@ -76,7 +76,7 @@ export function canChangeStatus(currentStatus, nextStatus) {
  * @returns {Array}
  */
 export function filterJobs(jobs, criteria) {
-    if (!criteria || Object.keys(criteria).length === 0) return jobs;
+    if (!criteria || Object.keys(criteria).length === 0) {return jobs;}
     return jobs.filter(job => {
         return Object.keys(criteria).every(key => job[key] === criteria[key]);
     });
@@ -89,6 +89,6 @@ export function filterJobs(jobs, criteria) {
  * @returns {boolean}
  */
 export function isOwner(currentUserId, profileId) {
-    if (!currentUserId || !profileId) return false;
+    if (!currentUserId || !profileId) {return false;}
     return currentUserId === profileId;
 }
