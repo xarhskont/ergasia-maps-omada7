@@ -3,3 +3,4 @@ package-lock.json
 skills-lock.json
 dist/
 build/
+.agents/
