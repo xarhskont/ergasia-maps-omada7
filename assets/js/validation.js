@@ -49,7 +49,7 @@ export function calculateAverageRating(reviews) {
 
 /**
  * Validates if a rating value is within the allowed range (1-5)
- * @param {number} rating 
+ * @param {number} rating
  * @returns {boolean}
  */
 export function validateRatingValue(rating) {
@@ -58,37 +58,47 @@ export function validateRatingValue(rating) {
 
 /**
  * Determines if a job status transition is allowed
- * @param {string} currentStatus 
- * @param {string} nextStatus 
+ * @param {string} currentStatus
+ * @param {string} nextStatus
  * @returns {boolean}
  */
 export function canChangeStatus(currentStatus, nextStatus) {
-    if (nextStatus === 'cancelled') {return true;}
-    if (currentStatus === 'open' && nextStatus === 'assigned') {return true;}
-    if (currentStatus === 'assigned' && nextStatus === 'completed') {return true;}
+    if (nextStatus === 'cancelled') {
+        return true;
+    }
+    if (currentStatus === 'open' && nextStatus === 'assigned') {
+        return true;
+    }
+    if (currentStatus === 'assigned' && nextStatus === 'completed') {
+        return true;
+    }
     return false;
 }
 
 /**
  * Filters a list of jobs based on criteria
- * @param {Array} jobs 
+ * @param {Array} jobs
  * @param {Object} criteria { category: string }
  * @returns {Array}
  */
 export function filterJobs(jobs, criteria) {
-    if (!criteria || Object.keys(criteria).length === 0) {return jobs;}
-    return jobs.filter(job => {
-        return Object.keys(criteria).every(key => job[key] === criteria[key]);
+    if (!criteria || Object.keys(criteria).length === 0) {
+        return jobs;
+    }
+    return jobs.filter((job) => {
+        return Object.keys(criteria).every((key) => job[key] === criteria[key]);
     });
 }
 
 /**
  * Checks if the current user is the owner of the profile
- * @param {string} currentUserId 
- * @param {string} profileId 
+ * @param {string} currentUserId
+ * @param {string} profileId
  * @returns {boolean}
  */
 export function isOwner(currentUserId, profileId) {
-    if (!currentUserId || !profileId) {return false;}
+    if (!currentUserId || !profileId) {
+        return false;
+    }
     return currentUserId === profileId;
 }

@@ -21,7 +21,7 @@ registerForm.addEventListener('submit', async (e) => {
         email: document.getElementById('email').value,
         password: document.getElementById('password').value,
         confirmPassword: document.getElementById('confirmPassword').value,
-        role: document.getElementById('role').value,
+        role: document.getElementById('role').value
     };
 
     const validation = validateRegistration(data);
@@ -37,7 +37,11 @@ registerForm.addEventListener('submit', async (e) => {
         submitBtn.innerText = 'Creating Account...';
 
         // 1. Create user in Firebase Auth
-        const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+        const userCredential = await createUserWithEmailAndPassword(
+            auth,
+            data.email,
+            data.password
+        );
         const uid = userCredential.user.uid;
 
         // 2. Create user profile in Firestore

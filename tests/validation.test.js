@@ -1,36 +1,73 @@
-import { validateRegistration, calculateAverageRating, validateRatingValue, canChangeStatus, filterJobs, isOwner } from '../assets/js/validation.js';
+import {
+    validateRegistration,
+    calculateAverageRating,
+    validateRatingValue,
+    canChangeStatus,
+    filterJobs,
+    isOwner
+} from '../assets/js/validation.js';
 
 describe('Registration Validation Tests', () => {
     test('should return error if fullName is missing', () => {
-        const data = { fullName: '', email: 'test@example.com', password: 'password123', confirmPassword: 'password123', role: 'freelancer' };
+        const data = {
+            fullName: '',
+            email: 'test@example.com',
+            password: 'password123',
+            confirmPassword: 'password123',
+            role: 'freelancer'
+        };
         const result = validateRegistration(data);
         expect(result.isValid).toBe(false);
         expect(result.errors).toContain('Full name is required');
     });
 
     test('should return error if email is invalid', () => {
-        const data = { fullName: 'John Doe', email: 'invalid-email', password: 'password123', confirmPassword: 'password123', role: 'freelancer' };
+        const data = {
+            fullName: 'John Doe',
+            email: 'invalid-email',
+            password: 'password123',
+            confirmPassword: 'password123',
+            role: 'freelancer'
+        };
         const result = validateRegistration(data);
         expect(result.isValid).toBe(false);
         expect(result.errors).toContain('A valid email is required');
     });
 
     test('should return error if passwords do not match', () => {
-        const data = { fullName: 'John Doe', email: 'test@example.com', password: 'password123', confirmPassword: 'different123', role: 'freelancer' };
+        const data = {
+            fullName: 'John Doe',
+            email: 'test@example.com',
+            password: 'password123',
+            confirmPassword: 'different123',
+            role: 'freelancer'
+        };
         const result = validateRegistration(data);
         expect(result.isValid).toBe(false);
         expect(result.errors).toContain('Passwords do not match');
     });
 
     test('should return error if role is missing', () => {
-        const data = { fullName: 'John Doe', email: 'test@example.com', password: 'password123', confirmPassword: 'password123', role: '' };
+        const data = {
+            fullName: 'John Doe',
+            email: 'test@example.com',
+            password: 'password123',
+            confirmPassword: 'password123',
+            role: ''
+        };
         const result = validateRegistration(data);
         expect(result.isValid).toBe(false);
         expect(result.errors).toContain('A user role must be selected');
     });
 
     test('should pass when all fields are valid', () => {
-        const data = { fullName: 'John Doe', email: 'test@example.com', password: 'password123', confirmPassword: 'password123', role: 'freelancer' };
+        const data = {
+            fullName: 'John Doe',
+            email: 'test@example.com',
+            password: 'password123',
+            confirmPassword: 'password123',
+            role: 'freelancer'
+        };
         const result = validateRegistration(data);
         expect(result.isValid).toBe(true);
         expect(result.errors.length).toBe(0);
@@ -99,14 +136,14 @@ describe('Job Filtering Tests', () => {
     const mockJobs = [
         { id: 1, title: 'Job A', category: 'Web Development' },
         { id: 2, title: 'Job B', category: 'Graphic Design' },
-        { id: 3, title: 'Job C', category: 'Web Development' },
+        { id: 3, title: 'Job C', category: 'Web Development' }
     ];
 
     test('should filter jobs by category', () => {
         const criteria = { category: 'Web Development' };
         const result = filterJobs(mockJobs, criteria);
         expect(result.length).toBe(2);
-        expect(result.every(job => job.category === 'Web Development')).toBe(true);
+        expect(result.every((job) => job.category === 'Web Development')).toBe(true);
     });
 
     test('should return all jobs if criteria is empty', () => {
