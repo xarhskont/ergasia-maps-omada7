@@ -12,6 +12,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Linting
+        run: npm run lint
+
+      - name: Run Formatting Check
+        run: npm run format:check
+
+      - name: Run Unit Tests
+        run: |
+          export NODE_OPTIONS=--experimental-vm-modules
+          npm test -- --testPathPattern=validation.test.js
+
       - name: Check files
         run: |
           test -f index.html

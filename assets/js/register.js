@@ -6,6 +6,7 @@ import {
     serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
 import { loadHeader, loadFooter } from './layout.js';
+import { validateRegistration } from './validation.js';
 
 loadHeader();
 loadFooter();
@@ -15,17 +16,21 @@ const registerForm = document.getElementById('register-form');
 registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const fullName = document.getElementById('fullName').value;
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    const role = document.getElementById('role').value;
-    const submitBtn = registerForm.querySelector('button');
+    const data = {
+        fullName: document.getElementById('fullName').value,
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+        confirmPassword: document.getElementById('confirmPassword').value,
+        role: document.getElementById('role').value,
+    };
 
-    if (password !== confirmPassword) {
-        alert('Passwords do not match!');
+    const validation = validateRegistration(data);
+    if (!validation.isValid) {
+        alert(validation.errors.join('\n'));
         return;
     }
+
+    const submitBtn = registerForm.querySelector('button');
 
     try {
         submitBtn.disabled = true;
@@ -37,9 +42,9 @@ registerForm.addEventListener('submit', async (e) => {
 
         // 2. Create user profile in Firestore
         await setDoc(doc(db, 'users', uid), {
-            fullName: fullName,
-            email: email,
-            role: role,
+            fullName: data.fullName,
+            email: data.email,
+            role: data.role,
             bio: '',
             skills: [],
             averageRating: 0,

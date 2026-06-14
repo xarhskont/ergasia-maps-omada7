@@ -1,4 +1,3 @@
-// rating.js
 import { db, auth } from './firebase-config.js';
 import {
     collection,
@@ -8,6 +7,7 @@ import {
     getDocs,
     serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js';
+import { calculateAverageRating } from './validation.js';
 
 /**
  * Submits a rating for a user
@@ -73,10 +73,10 @@ export async function getUserRatings(userId) {
             totalRating += data.rating;
         });
 
-        const average = reviews.length > 0 ? totalRating / reviews.length : 0;
+        const average = calculateAverageRating(reviews);
 
         return {
-            average: average.toFixed(1),
+            average: average,
             totalReviews: reviews.length,
             reviews: reviews.sort((a, b) => b.createdAt - a.createdAt)
         };
