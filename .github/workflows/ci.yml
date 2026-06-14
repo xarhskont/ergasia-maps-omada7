@@ -21,8 +21,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Fix ESLint Executable Permissions
-        run: chmod +x ./node_modules/.bin/eslint
+      - name: Fix Executable Permissions for ESLint and Prettier
+        run: chmod +x ./node_modules/.bin/eslint ./node_modules/.bin/prettier
 
       - name: Run Linting
         run: npm run lint
